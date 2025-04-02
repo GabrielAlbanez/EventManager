@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
+import { ProgressBar } from 'react-native-paper';
 
 export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -17,7 +18,6 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Carregando...</Text>
-      <ActivityIndicator size="large" color="#fff" />
     </View>
   );
 }
@@ -31,9 +31,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   text: {
-    color: '#1E3A8A',
+    color: 'purple',
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
+  },
+  progressBar: {
+    width: '80%',
+    height: 6,
   },
 });
