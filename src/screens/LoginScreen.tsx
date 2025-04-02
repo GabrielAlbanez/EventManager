@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { Button, TextInput, Checkbox, Avatar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -7,7 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useState } from 'react';
-import Animated, { FadeInUp, ZoomIn } from 'react-native-reanimated';
+import Animated, {  ZoomIn } from 'react-native-reanimated';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),

@@ -109,22 +109,7 @@ export default function RegisterScreen() {
           />
           {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>}
 
-          <Controller
-            control={control}
-            name="phone"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                label="Telefone"
-                mode="outlined"
-                value={value}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={!!errors.phone}
-                style={styles.input}
-              />
-            )}
-          />
-          {errors.phone && <Text style={styles.errorText}>{errors.phone.message}</Text>}
+
 
 
           <View style={styles.optionsContainer}>
