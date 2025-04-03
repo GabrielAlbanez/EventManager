@@ -5,8 +5,14 @@ import { NavigationProp } from 'types/TypeRoute';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useState } from 'react';
-import Animated, {  ZoomIn } from 'react-native-reanimated';
+import { useState, useEffect } from 'react';
+import Animated, { ZoomIn } from 'react-native-reanimated';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import * as AuthSession from 'expo-auth-session';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -25,6 +31,45 @@ export default function LoginScreen() {
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
+
+  // Configuração do Google Auth
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID,
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      if (authentication?.accessToken) {
+        loginWithGoogle(authentication.accessToken);
+      }
+    }
+  }, [response]);
+
+  const loginWithGoogle = async (googleToken: string) => {
+    try {
+      const res = await fetch('http://172.16.6.11:5000/auth/googlee', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: googleToken }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        await AsyncStorage.setItem('accessToken', data.access_token);
+        console.log('Usuário logado:', data.user);
+        navigation.navigate('Home');
+      } else {
+        console.error('Erro no login:', data.message);
+      }
+    } catch (error) {
+      console.error('Erro ao conectar com o servidor:', error);
+    }
+  };
 
   const onSubmit = (data: LoginForm) => {
     console.log(data);
@@ -98,8 +143,9 @@ export default function LoginScreen() {
 
           <Button
             mode="outlined"
-            onPress={() => console.log('Login com Google')}
+            onPress={() => promptAsync()}
             style={styles.googleButton}
+            disabled={!request}
           >
             Entrar com Google
           </Button>
@@ -158,6 +204,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 12,
+    backgroundColor: '#1b1b1b',
   },
   signupContainer: {
     marginTop: 16,
@@ -193,7 +240,8 @@ const styles = StyleSheet.create({
   googleButton: {
     marginTop: 8,
     width: '100%',
-    borderColor: '#4285F4',
+    borderColor: '#1b1b11',
+    color: '#6B7280',
   },
   container1: {
     justifyContent: 'center',
