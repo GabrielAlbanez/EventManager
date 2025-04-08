@@ -109,7 +109,6 @@ export default function RegisterScreen() {
           />
           {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>}
 
-a
 
 
           <View style={styles.optionsContainer}>

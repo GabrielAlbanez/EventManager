@@ -1,4 +1,12 @@
-import { View, Text, TouchableOpacity, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+} from 'react-native';
 import { Button, TextInput, Checkbox, Avatar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
@@ -11,6 +19,13 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as AuthSession from 'expo-auth-session';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  GoogleSignin,
+  User,
+  isSuccessResponse,
+  isErrorWithCode,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -24,6 +39,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [rememberMe, setRememberMe] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<null | User>(null);
   const {
     control,
     handleSubmit,
@@ -32,42 +48,46 @@ export default function LoginScreen() {
     resolver: zodResolver(loginSchema),
   });
 
-  // Configuração do Google Auth
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID,
-  });
+  const [submiting, setIsSubmiting] = useState(false);
 
   useEffect(() => {
-    if (response?.type === 'success') {
-      const { authentication } = response;
-      if (authentication?.accessToken) {
-        loginWithGoogle(authentication.accessToken);
-      }
-    }
-  }, [response]);
+    GoogleSignin.configure({
+      iosClientId: '911018498691-p25344q35mgofevt2gtpq8djvdhh6b0p.apps.googleusercontent.com',
+      webClientId: '911018498691-akj2ohut3f9brilpdsnosvca66aifudp.apps.googleusercontent.com',
+      profileImageSize: 150,
+    });
+  });
 
-  const loginWithGoogle = async (googleToken: string) => {
+  const handleGoogleSignIn = async () => {
     try {
-      const res = await fetch('http://172.16.6.11:5000/auth/googlee', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token: googleToken }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        await AsyncStorage.setItem('accessToken', data.access_token);
-        console.log('Usuário logado:', data.user);
+      setIsSubmiting(true);
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (isSuccessResponse(response)) {
+        const user = response.data
+        await AsyncStorage.setItem('user', JSON.stringify(user.user));  
+        setIsAuthenticated(user);
         navigation.navigate('Home');
       } else {
-        console.error('Erro no login:', data.message);
+        console.log('Error', 'Failed to sign in with Google');
       }
+      setIsSubmiting(false);
     } catch (error) {
-      console.error('Erro ao conectar com o servidor:', error);
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.IN_PROGRESS:
+            console.log('Sign in is in progress');
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            console.log('Play services not available');
+            break;
+          default:
+            console.log('Error', error);
+        }
+      } else {
+        console.log('Error', error);
+      }
+      setIsSubmiting(false);
     }
   };
 
@@ -78,10 +98,10 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-        
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled">
         <Animated.View style={styles.container1} entering={ZoomIn.duration(800)}>
           <Avatar.Image size={120} source={require('../../assets/irelia.jpg')} />
         </Animated.View>
@@ -141,12 +161,7 @@ export default function LoginScreen() {
             Entrar
           </Button>
 
-          <Button
-            mode="outlined"
-            onPress={() => promptAsync()}
-            style={styles.googleButton}
-            disabled={!request}
-          >
+          <Button mode="outlined" style={styles.googleButton} onPress={handleGoogleSignIn}>
             Entrar com Google
           </Button>
 
@@ -157,7 +172,6 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
         </Animated.View>
-        
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -172,7 +186,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16,    
+    paddingHorizontal: 16,
   },
   card: {
     justifyContent: 'center',
