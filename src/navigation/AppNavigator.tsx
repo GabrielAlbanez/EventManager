@@ -1,19 +1,20 @@
-// src/navigation/AppNavigator.tsx
-import { createStackNavigator } from '@react-navigation/stack';
-import RegisterScreen from '../screens/RegisterScreen';
-import InitilScreenen from '../screens/InitilScreen';
-import LoginScreen from '~/screens/LoginScreen';
-import HomeScreen from '~/screens/Home';
-
-const Stack = createStackNavigator();
+import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AuthStack from './AuthStack';
+import BottomTabs from './BottomTabs';
 
 export default function AppNavigator() {
-  return (
-    <Stack.Navigator initialRouteName="InitilScreenen" screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="InitilScreenen" component={InitilScreenen} />
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
-      <Stack.Screen name="Home" component={HomeScreen} />
-    </Stack.Navigator>
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await AsyncStorage.getItem('user');
+      setIsAuthenticated(!!user);
+    };
+    checkAuth();
+  }, []);
+
+  if (isAuthenticated === null) return null; // Ou um loading
+
+  return isAuthenticated ? <BottomTabs /> : <AuthStack />;
 }

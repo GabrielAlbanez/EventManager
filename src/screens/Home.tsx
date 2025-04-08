@@ -1,48 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Avatar, Button } from 'react-native-paper';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { Button } from 'react-native-paper';
 
 export default function HomeScreen() {
   const navigation = useNavigation();
-  const [userData, setUserData] = useState<any>(null);
-
-  useEffect(() => {
-    const loadUserData = async () => {
-      const data = await AsyncStorage.getItem('user');
-      if (data) {
-        setUserData(JSON.parse(data));
-      }
-    };
-    loadUserData();
-  }, []);
-
-  const handleLogout = async () => {
-    try {
-      await GoogleSignin.signOut(); // Deslogar do Google
-      await AsyncStorage.clear();   // Limpar o armazenamento local
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' as never }], // Voltar para a tela de login
-      });
-    } catch (error) {
-      console.log('Erro ao sair:', error);
-    }
-  };
-
-  if (!userData) {
-    return <Text>Carregando...</Text>;
-  }
 
   return (
     <View style={styles.container}>
-      <Avatar.Image size={100} source={{ uri: userData.photo }} />
-      <Text style={styles.name}>{userData.name}</Text>
-      <Text style={styles.email}>{userData.email}</Text>
-      <Button mode="contained" onPress={handleLogout} style={styles.logoutButton}>
-        Logout
+      <Text style={styles.title}>🎉 Bem-vindo ao EventHub!</Text>
+      <Text style={styles.subtitle}>Descubra eventos incríveis perto de você.</Text>
+      
+      <Button 
+        mode="contained" 
+        style={styles.button}
+      >
+        Ver eventos
       </Button>
     </View>
   );
@@ -51,23 +23,27 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 100,
+    justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
     backgroundColor: '#fff',
   },
-  name: {
-    fontSize: 22,
+  title: {
+    fontSize: 26,
     fontWeight: 'bold',
-    marginTop: 16,
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  email: {
+  subtitle: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 24,
+    color: '#555',
+    marginBottom: 30,
+    textAlign: 'center',
   },
-  logoutButton: {
-    backgroundColor: '#d32f2f',
-    paddingHorizontal: 20,
-    marginTop: 20,
+  button: {
+    backgroundColor: '#6200ee',
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
 });

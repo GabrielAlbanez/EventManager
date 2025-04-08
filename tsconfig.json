@@ -3,7 +3,11 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-jsx",
-
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "types": ["react", "react-native", "react-native-vector-icons"],
     "baseUrl": ".",
     "paths": {
       "~/*": ["src/*"]
