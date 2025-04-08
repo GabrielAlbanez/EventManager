@@ -8,7 +8,6 @@ import {
   Platform,
 } from 'react-native';
 import { Button, TextInput, Checkbox, Avatar } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,6 +25,7 @@ import {
   isErrorWithCode,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { useNavigation } from '@react-navigation/native';
 
 WebBrowser.maybeCompleteAuthSession();
 
