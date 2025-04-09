@@ -4,19 +4,24 @@ import AppTabs from './AppTabs';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
+import InitilScreen from '~/screens/InitilScreen';
 
 export default function MainNavigator() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isChecking, setIsChecking] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkToken = async () => {
       const token = await AsyncStorage.getItem('token');
       setIsAuthenticated(!!token);
+      setIsChecking(false);
     };
     checkToken();
   }, []);
 
-  if (isAuthenticated === null) return null; // ou um loading
+  if (isChecking) {
+    return <InitilScreen />; // só mostra enquanto verifica
+  }
 
   return (
     <NavigationContainer>

@@ -13,12 +13,17 @@ export default function InitilScreen() {
     const checkLogin = async () => {
       try {
         const userData = await AsyncStorage.getItem('user');
-        const nextScreen = userData ? 'Home' : 'Login';
+        const nextScreen = userData ? 'Root' : 'Login';
 
         setTimeout(() => {
           navigation.reset({
             index: 0,
-            routes: [{ name: nextScreen }],
+            routes: [
+              {
+                name: nextScreen,
+                params: { screen: 'Profile' }, // <- Isso vai pra aba "Profile"
+              },
+            ],
           });
         }, 2000);
       } catch (error) {

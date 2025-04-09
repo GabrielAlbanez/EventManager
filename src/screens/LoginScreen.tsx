@@ -25,7 +25,7 @@ import {
   isErrorWithCode,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { useNavigation } from '@react-navigation/native';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -50,13 +50,7 @@ export default function LoginScreen() {
 
   const [submiting, setIsSubmiting] = useState(false);
 
-  useEffect(() => {
-    GoogleSignin.configure({
-      iosClientId: '911018498691-p25344q35mgofevt2gtpq8djvdhh6b0p.apps.googleusercontent.com',
-      webClientId: '911018498691-akj2ohut3f9brilpdsnosvca66aifudp.apps.googleusercontent.com',
-      profileImageSize: 150,
-    });
-  });
+
 
   const handleGoogleSignIn = async () => {
     try {
@@ -67,7 +61,15 @@ export default function LoginScreen() {
         const user = response.data
         await AsyncStorage.setItem('user', JSON.stringify(user.user));  
         setIsAuthenticated(user);
-        navigation.navigate('Home');
+        navigation.reset({
+          index: 0,
+          routes: [
+            {
+              name: "Root",
+              params: { screen: 'Home' }, // <- Isso vai pra aba "Profile"
+            },
+          ],
+        });
       } else {
         console.log('Error', 'Failed to sign in with Google');
       }
