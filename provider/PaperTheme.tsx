@@ -5,7 +5,6 @@ export const customTheme = {
   custom: 'property',
   colors: {
     ...DefaultTheme.colors,
-    primary: '#fff', // 👈 tira o ripple roxo
     
   },
 };
