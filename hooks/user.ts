@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface User {
-    photo : string;
+    profile_image : string;
     id: string;
     name: string;
     email: string;

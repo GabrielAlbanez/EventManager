@@ -37,7 +37,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <Avatar.Image size={100} source={{ uri: userData.photo }} />
+      <Avatar.Image size={100} source={{ uri: userData.profile_image }} />
       <Text style={styles.name}>{userData.name}</Text>
       <Text style={styles.email}>{userData.email}</Text>
       <Button mode="contained" onPress={handleLogout} style={styles.logoutButton}>

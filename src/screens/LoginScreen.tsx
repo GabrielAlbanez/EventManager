@@ -58,18 +58,45 @@ export default function LoginScreen() {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       if (isSuccessResponse(response)) {
-        const user = response.data
-        await AsyncStorage.setItem('user', JSON.stringify(user.user));  
-        setIsAuthenticated(user);
-        navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: "Root",
-              params: { screen: 'Home' }, // <- Isso vai pra aba "Profile"
-            },
-          ],
+        const user = response.data;
+        console.log("token", user.idToken)
+
+  
+        // Chamada para sua rota '/auth/googlee' com o token
+        const res = await fetch('http://172.16.6.11:5000/auth/googlee', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: user.user.email,
+            token: user.idToken,  // O token JWT obtido do Google
+            providerType : "google",
+          }),
         });
+  
+        const data = await res.json();
+  
+        if (res.ok) {
+          // Armazenando o usuário no AsyncStorage
+          await AsyncStorage.setItem('user', JSON.stringify(data.user));
+          
+          // Atualiza a autenticação
+          setIsAuthenticated(data.user);
+  
+          // Navegar para a tela Home após login bem-sucedido
+          navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: 'Root',
+                params: { screen: 'Home' },
+              },
+            ],
+          });
+        } else {
+          console.log('Erro ao fazer login', data);
+        }
       } else {
         console.log('Error', 'Failed to sign in with Google');
       }
