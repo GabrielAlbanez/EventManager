@@ -26,6 +26,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { CommonActions, useNavigation } from '@react-navigation/native';
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -50,7 +51,14 @@ export default function LoginScreen() {
 
   const [submiting, setIsSubmiting] = useState(false);
 
-
+  const showGoogleError = (message: string) => {
+    Dialog.show({
+      type: ALERT_TYPE.DANGER,
+      title: 'Erro no Login',
+      textBody: message,
+      button: 'OK',
+    });
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -95,10 +103,10 @@ export default function LoginScreen() {
             ],
           });
         } else {
-          console.log('Erro ao fazer login', data);
+          showGoogleError(data.message ?? 'Tente novamente mais tarde');
         }
       } else {
-        console.log('Error', 'Failed to sign in with Google');
+        showGoogleError('Error Failed to sign in with Google');
       }
       setIsSubmiting(false);
     } catch (error) {
@@ -193,6 +201,7 @@ export default function LoginScreen() {
           <Button mode="outlined" style={styles.googleButton} onPress={handleGoogleSignIn}>
             Entrar com Google
           </Button>
+
 
           <View style={styles.signupContainer}>
             <Text style={styles.signupText}>Não tem uma conta? </Text>
