@@ -23,8 +23,19 @@ export default function MainNavigator() {
     return <InitilScreen />; // só mostra enquanto verifica
   }
 
+  // Deep linking configuration
+  const linking = {
+    prefixes: ['myapp://'], // URL scheme que irá abrir seu app
+    config: {
+      screens: {
+        ResetPassword: 'reset-password/:resetToken', // Mapeia a URL de deep link para a tela de redefinir senha
+        // Defina outras rotas aqui, se necessário
+      },
+    },
+  };
+
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       {isAuthenticated ? <AppTabs /> : <AuthNavigator />}
     </NavigationContainer>
   );
