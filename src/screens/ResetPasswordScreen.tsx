@@ -9,6 +9,7 @@ export default function ResetPasswordScreen() {
   const route = useRoute();
   const { resetToken } = route.params as { resetToken: string };
 
+
   const onSubmit = async ({ password }: { password: string }) => {
     try {
       const res = await fetch(`http://localhost:5000/auth/reset-password/${resetToken}`, {

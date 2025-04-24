@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Dialog, ALERT_TYPE } from 'react-native-alert-notification';
 
 export default function ForgotPasswordScreen() {
   const { control, handleSubmit } = useForm<{ email: string }>();
+  const [emailSent, setEmailSent] = useState(false);
 
   const onSubmit = async ({ email }: { email: string }) => {
     try {
@@ -16,6 +17,8 @@ export default function ForgotPasswordScreen() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
+
+      setEmailSent(true);
 
       Dialog.show({
         type: ALERT_TYPE.SUCCESS,
@@ -36,25 +39,34 @@ export default function ForgotPasswordScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Esqueceu sua senha?</Text>
-      <Controller
-        control={control}
-        name="email"
-        rules={{ required: true }}
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Digite seu e-mail"
-            value={value}
-            onChangeText={onChange}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
+
+      {emailSent ? (
+        <Text style={styles.infoText}>
+          Enviamos um link para o seu e-mail. Por favor, verifique sua caixa de entrada.
+        </Text>
+      ) : (
+        <>
+          <Controller
+            control={control}
+            name="email"
+            rules={{ required: true }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Digite seu e-mail"
+                value={value}
+                onChangeText={onChange}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            )}
           />
-        )}
-      />
-      <TouchableOpacity style={styles.button} onPress={handleSubmit(onSubmit)}>
-        <Text style={styles.buttonText}>Enviar link de redefinição</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleSubmit(onSubmit)}>
+            <Text style={styles.buttonText}>Enviar link de redefinição</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
@@ -92,5 +104,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  infoText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
