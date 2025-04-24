@@ -1,24 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Avatar, Button } from 'react-native-paper';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useUser } from 'hooks/user';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const [userData, setUserData] = useState<any>(null);
-
-  useEffect(() => {
-    const loadUserData = async () => {
-      const data = await AsyncStorage.getItem('user');
-      if (data) {
-        setUserData(JSON.parse(data));
-      }
-    };
-    loadUserData();
-  }, []);
+  const { user, loading } = useUser();
 
   const handleLogout = async () => {
     console.log("Logout");
@@ -31,15 +22,18 @@ export default function ProfileScreen() {
     }
   };
 
-  if (!userData) {
+  if (loading || !user) {
     return <Text>Carregando...</Text>;
   }
 
+  console.log(user)
+
   return (
     <View style={styles.container}>
-      <Avatar.Image size={100} source={{ uri: userData.profile_image }} />
-      <Text style={styles.name}>{userData.name}</Text>
-      <Text style={styles.email}>{userData.email}</Text>
+      <Avatar.Image size={100} source={{ uri: user.profile_image }} />
+      <Text style={styles.name}>{user.name}</Text>
+      <Text style={styles.email}>{user.email}</Text>
+      <Text style={styles.provider}>Provedor : -|- {user.provedorType}</Text>
       <Button mode="contained" onPress={handleLogout} style={styles.logoutButton}>
         Logout
       </Button>
@@ -62,6 +56,11 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 16,
     color: '#666',
+    marginBottom: 8,
+  },
+  provider: {
+    fontSize: 14,
+    color: '#999',
     marginBottom: 24,
   },
   logoutButton: {

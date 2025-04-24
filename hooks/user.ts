@@ -6,6 +6,7 @@ interface User {
     id: string;
     name: string;
     email: string;
+    provedorType : string;
 }
 
 export const useUser = () => {
