@@ -11,6 +11,8 @@ import {
   TouchableOpacityProps,
 } from 'react-native';
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
+import { Avatar } from 'react-native-paper';
+import { useUser } from 'hooks/user';
 
 const Tab = createBottomTabNavigator();
 const { width } = Dimensions.get('window');
@@ -32,6 +34,8 @@ const CustomTabBarButton = (props: BottomTabBarButtonProps) => {
 };
 
 export default function AppTabs() {
+  const { user, loading, updateUser } = useUser();
+
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -48,17 +52,19 @@ export default function AppTabs() {
                 size={28}
                 color={focused ? '#1b1b1b' : '#A0AEC0'}
               />
-            ) : (
-              <Ionicons
-                name={focused ? 'person-circle' : 'person-circle-outline'}
+            ) : user?.profile_image ? (
+              <Avatar.Image
                 size={28}
-                color={focused ? '#1b1b1b' : '#A0AEC0'}
+                source={{
+                  uri: `http://172.16.6.11:5000/upload/get_image/${user.profile_image}`,
+                }}
               />
+            ) : (
+              <Avatar.Icon size={28} icon="account" />
             )}
           </View>
         ),
-      })}
-    >
+      })}>
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
