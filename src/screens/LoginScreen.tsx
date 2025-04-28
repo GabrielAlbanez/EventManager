@@ -8,12 +8,11 @@ import {
   Platform,
 } from 'react-native';
 import { Button, TextInput, Checkbox, Avatar } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
@@ -26,6 +25,8 @@ import {
   isErrorWithCode,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { useNavigation } from '@react-navigation/native';
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -50,13 +51,14 @@ export default function LoginScreen() {
 
   const [submiting, setIsSubmiting] = useState(false);
 
-  useEffect(() => {
-    GoogleSignin.configure({
-      iosClientId: '911018498691-p25344q35mgofevt2gtpq8djvdhh6b0p.apps.googleusercontent.com',
-      webClientId: '911018498691-akj2ohut3f9brilpdsnosvca66aifudp.apps.googleusercontent.com',
-      profileImageSize: 150,
+  const showError = (message: string) => {
+    Dialog.show({
+      type: ALERT_TYPE.DANGER,
+      title: 'Erro no Login',
+      textBody: message,
+      button: 'OK',
     });
-  });
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -64,35 +66,87 @@ export default function LoginScreen() {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       if (isSuccessResponse(response)) {
-        const user = response.data
-        await AsyncStorage.setItem('user', JSON.stringify(user.user));  
-        setIsAuthenticated(user);
-        navigation.navigate('Home');
+        const user = response.data;
+
+        const res = await fetch('http://172.16.6.11:5000/auth/googlee', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: user.user.email,
+            token: user.idToken,
+            providerType: 'google',
+          }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          await AsyncStorage.setItem('user', JSON.stringify(data.user));
+          setIsAuthenticated(data.user);
+
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Root', params: { screen: 'Home' } }],
+          });
+        } else {
+          showError(data.message ?? 'Tente novamente mais tarde');
+        }
       } else {
-        console.log('Error', 'Failed to sign in with Google');
+        showError('Erro ao fazer login com o Google');
       }
       setIsSubmiting(false);
     } catch (error) {
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.IN_PROGRESS:
-            console.log('Sign in is in progress');
+            console.log('Login em andamento');
             break;
           case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            console.log('Play services not available');
+            console.log('Serviços do Google não disponíveis');
             break;
           default:
-            console.log('Error', error);
+            console.log('Erro', error);
         }
       } else {
-        console.log('Error', error);
+        console.log('Erro', error);
       }
       setIsSubmiting(false);
     }
   };
 
-  const onSubmit = (data: LoginForm) => {
-    console.log(data);
+  const onSubmit = async (data: LoginForm) => {
+    try {
+      setIsSubmiting(true);
+      const res = await fetch('http://172.16.6.11:5000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          providerType: 'credentials',
+        }),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        await AsyncStorage.setItem('user', JSON.stringify(result.user));
+        setIsAuthenticated(result.user);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Root', params: { screen: 'Home' } }],
+        });
+      } else {
+        showError(result.message ?? 'Erro no login, tente novamente');
+      }
+    } catch (err) {
+      showError('Erro inesperado. Verifique sua conexão.');
+      console.log(err);
+    } finally {
+      setIsSubmiting(false);
+    }
   };
 
   return (
@@ -152,12 +206,16 @@ export default function LoginScreen() {
               />
               <Text style={styles.rememberMeText}>Lembrar-me</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('ForgetPassword')}>
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
               <Text style={styles.forgotPassword}>Esqueci minha senha</Text>
             </TouchableOpacity>
           </View>
 
-          <Button mode="contained" onPress={handleSubmit(onSubmit)} style={styles.button}>
+          <Button
+            mode="contained"
+            onPress={handleSubmit(onSubmit)}
+            style={styles.button}
+            loading={submiting}>
             Entrar
           </Button>
 
