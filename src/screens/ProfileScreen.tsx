@@ -1,24 +1,73 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { Avatar, Button } from 'react-native-paper';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { useNavigation } from '@react-navigation/native';
-import { NavigationProp } from 'types/TypeRoute';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import { useUser } from 'hooks/user';
 
 export default function ProfileScreen() {
-  const navigation = useNavigation<NavigationProp>();
-  const { user, loading } = useUser();
+  const { user, loading, updateUser } = useUser();
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleLogout = async () => {
-    console.log("Logout");
+  const handleImageUpload = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permissão necessária', 'Você precisa permitir acesso à galeria.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (result.canceled) {
+      console.log('Usuário cancelou a seleção da imagem');
+      return;
+    }
+
+    const asset = result.assets[0];
+    setIsUploading(true);
+
+    const formData = new FormData();
+    const file = {
+      uri: asset.uri,
+      name: asset.fileName || 'default.jpg',
+      type: asset.type || 'image/jpeg',
+    };
+
+    formData.append('file', file as any);
+
     try {
-      await GoogleSignin.signOut(); // Deslogar do Google
-      await AsyncStorage.clear();   // Limpar o armazenamento local
-      navigation.navigate('Login'); // Navegar para a tela de login
+      const res = await fetch(`http://seu-servidor.com/profile_image/${user?.id}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        Alert.alert('Sucesso', 'Imagem de perfil atualizada');
+        const updatedUser = {
+          ...user,
+          id: user?.id || '',
+          profile_image: data.image_url,
+          name: user?.name || '',
+          email: user?.email || '',
+          provedorType: user?.provedorType || '',
+        };
+        updateUser(updatedUser);
+      } else {
+        Alert.alert('Erro', data.error || 'Falha ao atualizar a imagem');
+      }
     } catch (error) {
-      console.log('Erro ao sair:', error);
+      console.error('Erro ao enviar imagem:', error);
+      Alert.alert('Erro', 'Falha ao enviar imagem');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -26,16 +75,25 @@ export default function ProfileScreen() {
     return <Text>Carregando...</Text>;
   }
 
-  console.log(user)
-
   return (
     <View style={styles.container}>
-      <Avatar.Image size={100} source={{ uri: user.profile_image }} />
+      <Avatar.Image
+        size={100}
+        source={{
+          uri: user.profile_image || 'https://via.placeholder.com/100',
+        }}
+      />
       <Text style={styles.name}>{user.name}</Text>
       <Text style={styles.email}>{user.email}</Text>
-      <Text style={styles.provider}>Provedor : -|- {user.provedorType}</Text>
-      <Button mode="contained" onPress={handleLogout} style={styles.logoutButton}>
-        Logout
+      <Text style={styles.provider}>Provedor: {user.provedorType}</Text>
+
+      <Button
+        mode="contained"
+        onPress={handleImageUpload}
+        style={styles.uploadButton}
+        loading={isUploading}
+      >
+        Atualizar Imagem
       </Button>
     </View>
   );
@@ -63,8 +121,8 @@ const styles = StyleSheet.create({
     color: '#999',
     marginBottom: 24,
   },
-  logoutButton: {
-    backgroundColor: '#d32f2f',
+  uploadButton: {
+    backgroundColor: '#3f51b5',
     paddingHorizontal: 20,
     marginTop: 20,
   },
