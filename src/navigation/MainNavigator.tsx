@@ -12,8 +12,8 @@ export default function MainNavigator() {
 
   useEffect(() => {
     const checkToken = async () => {
-      const token = await AsyncStorage.getItem('token');
-      setIsAuthenticated(!!token);
+      const user = await AsyncStorage.getItem('user');
+      setIsAuthenticated(!!user);
       setIsChecking(false);
     };
     checkToken();

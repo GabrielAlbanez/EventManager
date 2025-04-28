@@ -15,6 +15,7 @@ export default function App() {
       iosClientId: '911018498691-p25344q35mgofevt2gtpq8djvdhh6b0p.apps.googleusercontent.com',
       webClientId: '911018498691-akj2ohut3f9brilpdsnosvca66aifudp.apps.googleusercontent.com',
       profileImageSize: 150,
+      offlineAccess: true, 
     });
   });
 

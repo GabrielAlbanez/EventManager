@@ -7,6 +7,7 @@ interface User {
     name: string;
     email: string;
     provedorType: string;
+    providerType : string;
 }
 
 export const useUser = () => {

@@ -63,11 +63,23 @@ export default function LoginScreen() {
   const handleGoogleSignIn = async () => {
     try {
       setIsSubmiting(true);
+      console.log('Tentando autenticar com o Google...');
+      
+      // Verifica se o Play Services está disponível
       await GoogleSignin.hasPlayServices();
+      console.log('Play Services disponíveis!');
+      
+      // Tentando fazer o login com o Google
       const response = await GoogleSignin.signIn();
+      console.log('Resposta do Google Sign-In:', response);
+  
       if (isSuccessResponse(response)) {
-        const user = response.data;
-
+        const user = response.data;  // Alterei para "user" porque "response.data" pode não ser válido
+  
+        // Verificando se o usuário tem os dados necessários
+        console.log('Usuário autenticado com sucesso:', user);
+  
+        // Envia os dados para o backend
         const res = await fetch('http://172.16.6.11:5000/auth/googlee', {
           method: 'POST',
           headers: {
@@ -79,39 +91,50 @@ export default function LoginScreen() {
             providerType: 'google',
           }),
         });
-
+        
+        console.log('Resposta do backend:', res);
+        
         const data = await res.json();
-
+        console.log('Dados retornados do backend:', data);
+  
         if (res.ok) {
           await AsyncStorage.setItem('user', JSON.stringify(data.user));
           setIsAuthenticated(data.user);
-
+  
+          // Redireciona o usuário para a Home
           navigation.reset({
             index: 0,
             routes: [{ name: 'Root', params: { screen: 'Home' } }],
           });
+          console.log('Usuário autenticado com sucesso. Redirecionando para a Home.');
         } else {
           showError(data.message ?? 'Tente novamente mais tarde');
+          console.log('Erro no backend:', data.message);
         }
       } else {
         showError('Erro ao fazer login com o Google');
+        console.log('Erro no Google Sign-In');
       }
+  
       setIsSubmiting(false);
     } catch (error) {
+      console.log('Erro durante o processo de login:', error);
+      
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.IN_PROGRESS:
-            console.log('Login em andamento');
+            console.log('Login em andamento...');
             break;
           case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
             console.log('Serviços do Google não disponíveis');
             break;
           default:
-            console.log('Erro', error);
+            console.log('Erro desconhecido no Google Sign-In:', error);
         }
       } else {
-        console.log('Erro', error);
+        console.log('Erro inesperado:', error);
       }
+  
       setIsSubmiting(false);
     }
   };
@@ -157,7 +180,7 @@ export default function LoginScreen() {
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled">
         <Animated.View style={styles.container1} entering={ZoomIn.duration(800)}>
-          <Avatar.Image size={120} source={require('../../assets/irelia.jpg')} />
+          <Avatar.Image size={120} source={require('../../assets/Eventos.jpg')} />
         </Animated.View>
 
         <Animated.View style={styles.card} entering={ZoomIn.duration(1000)}>

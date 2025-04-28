@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { Avatar, Button } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { useUser } from 'hooks/user';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import { NavigationProp } from 'types/TypeRoute';
 
 export default function ProfileScreen() {
   const { user, loading, updateUser } = useUser();
   const [isUploading, setIsUploading] = useState(false);
+  const navigation = useNavigation<NavigationProp>(); // Hook de navegação
 
   const handleImageUpload = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -30,20 +34,20 @@ export default function ProfileScreen() {
     setIsUploading(true);
 
     const formData = new FormData();
-    const file = {
-      uri: asset.uri,
-      name: asset.fileName || 'default.jpg',
-      type: asset.type || 'image/jpeg',
-    };
 
-    formData.append('file', file as any);
+    formData.append('file', {
+      uri: asset.uri,
+      type: 'image/jpeg', // Você pode mudar baseado no asset.type
+      name: asset.fileName || `photo_${Date.now()}.jpg`,
+    } as any);
 
     try {
-      const res = await fetch(`http://seu-servidor.com/profile_image/${user?.id}`, {
+      const res = await fetch(`http://172.16.6.11:5000/upload/profile_image/${user!.id}`, {
         method: 'POST',
         body: formData,
         headers: {
-          'Content-Type': 'multipart/form-data',
+          // **IMPORTANTE:** NÃO definir 'Content-Type' manualmente
+          // fetch + FormData nativo montam o boundary automaticamente
         },
       });
 
@@ -51,13 +55,15 @@ export default function ProfileScreen() {
 
       if (res.ok) {
         Alert.alert('Sucesso', 'Imagem de perfil atualizada');
+
         const updatedUser = {
           ...user,
           id: user?.id || '',
-          profile_image: data.image_url,
+          profile_image: data.image_name,
           name: user?.name || '',
           email: user?.email || '',
           provedorType: user?.provedorType || '',
+          providerType: user?.providerType || '',
         };
         updateUser(updatedUser);
       } else {
@@ -71,29 +77,46 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      // Remover token e dados do usuário
+      await AsyncStorage.removeItem('user');
+      // Navegar para a tela de login após o logout
+      navigation.navigate('Login'); // Alterar 'Login' para o nome da sua tela de login
+    } catch (error) {
+      Alert.alert('Erro', 'Falha ao deslogar');
+    }
+  };
+
   if (loading || !user) {
     return <Text>Carregando...</Text>;
   }
 
+  console.log('User:', user.profile_image);
+   
+
+
   return (
     <View style={styles.container}>
-      <Avatar.Image
-        size={100}
-        source={{
-          uri: user.profile_image || 'https://via.placeholder.com/100',
-        }}
-      />
+      {/* Envolvendo Avatar com TouchableOpacity para torná-lo clicável */}
+      <TouchableOpacity onPress={handleImageUpload}>
+        <Avatar.Image
+          size={100}
+          source={{
+            uri: user.profile_image
+              ? `http://172.16.6.11:5000/upload/get_image/${user.profile_image}`
+              : 'https://via.placeholder.com/100', // Uma imagem padrão caso não tenha ainda
+          }}
+          style={styles.avatar}
+        />
+      </TouchableOpacity>
+
       <Text style={styles.name}>{user.name}</Text>
       <Text style={styles.email}>{user.email}</Text>
-      <Text style={styles.provider}>Provedor: {user.provedorType}</Text>
+      <Text style={styles.provider}>Provedor: {user.providerType}</Text>
 
-      <Button
-        mode="contained"
-        onPress={handleImageUpload}
-        style={styles.uploadButton}
-        loading={isUploading}
-      >
-        Atualizar Imagem
+      <Button mode="contained" style={styles.uploadButton} onPress={handleLogout}>
+        Logout
       </Button>
     </View>
   );
@@ -105,6 +128,9 @@ const styles = StyleSheet.create({
     paddingTop: 100,
     alignItems: 'center',
     backgroundColor: '#fff',
+  },
+  avatar: {
+    marginBottom: 16, // Adiciona um pouco de espaço abaixo da imagem
   },
   name: {
     fontSize: 22,
