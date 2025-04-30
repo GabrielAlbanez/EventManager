@@ -9,6 +9,7 @@ import AuthNavigator from '~/navigation/AuthNavigator';
 import { PaperProvider } from 'react-native-paper';
 import { customTheme } from 'provider/PaperTheme';
 import { AlertNotificationRoot } from 'react-native-alert-notification';
+import { UserProvider } from 'context/UserContext';
 export default function App() {
   useEffect(() => {
     GoogleSignin.configure({
@@ -20,6 +21,7 @@ export default function App() {
   });
 
   return (
+    <UserProvider >
     <AlertNotificationRoot>
       <PaperProvider theme={customTheme}>
         <NavigationContainer>
@@ -28,5 +30,6 @@ export default function App() {
         </NavigationContainer>
       </PaperProvider>
     </AlertNotificationRoot>
+    </UserProvider>
   );
 }

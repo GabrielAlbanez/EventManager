@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { Avatar, Button } from 'react-native-paper';
+import { ActivityIndicator, Avatar, Button } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
-import { useUser } from 'hooks/user';
+import { useUser } from 'context/UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
@@ -10,7 +10,7 @@ import { NavigationProp } from 'types/TypeRoute';
 export default function ProfileScreen() {
   const { user, loading, updateUser } = useUser();
   const [isUploading, setIsUploading] = useState(false);
-  const navigation = useNavigation<NavigationProp>(); // Hook de navegação
+  const navigation = useNavigation<NavigationProp>();
 
   const handleImageUpload = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -34,10 +34,9 @@ export default function ProfileScreen() {
     setIsUploading(true);
 
     const formData = new FormData();
-
     formData.append('file', {
       uri: asset.uri,
-      type: 'image/jpeg', // Você pode mudar baseado no asset.type
+      type: 'image/jpeg',
       name: asset.fileName || `photo_${Date.now()}.jpg`,
     } as any);
 
@@ -45,25 +44,20 @@ export default function ProfileScreen() {
       const res = await fetch(`http://172.16.6.11:5000/upload/profile_image/${user!.id}`, {
         method: 'POST',
         body: formData,
-        headers: {
-          // **IMPORTANTE:** NÃO definir 'Content-Type' manualmente
-          // fetch + FormData nativo montam o boundary automaticamente
-        },
       });
 
       const data = await res.json();
 
       if (res.ok) {
         Alert.alert('Sucesso', 'Imagem de perfil atualizada');
+        if (!user?.id) {
+          throw new Error('User ID is undefined');
+        }
 
         const updatedUser = {
           ...user,
-          id: user?.id || '',
+          id: user.id, // Ensure id is explicitly set and non-optional
           profile_image: data.image_name,
-          name: user?.name || '',
-          email: user?.email || '',
-          provedorType: user?.provedorType || '',
-          providerType: user?.providerType || '',
         };
         updateUser(updatedUser);
       } else {
@@ -79,41 +73,50 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     try {
-      // Remover token e dados do usuário
       await AsyncStorage.removeItem('user');
-      // Navegar para a tela de login após o logout
-      navigation.navigate('Login'); // Alterar 'Login' para o nome da sua tela de login
+      navigation.navigate('Login');
     } catch (error) {
       Alert.alert('Erro', 'Falha ao deslogar');
     }
   };
 
+  const getProfileImageUri = () => {
+    if (!user?.profile_image) {
+      return 'https://via.placeholder.com/100';
+    }
+
+    const isUrl = user.profile_image.startsWith('http');
+    if (user.providerType === 'google') {
+      return isUrl
+        ? user.profile_image
+        : `http://172.16.6.11:5000/upload/get_image/${user.profile_image}`;
+    }
+
+    return `http://172.16.6.11:5000/upload/get_image/${user.profile_image}`;
+  };
+
   if (loading || !user) {
-    return <Text>Carregando...</Text>;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#3f51b5" />
+      </View>
+    );
   }
-
-  console.log('User:', user.profile_image);
-   
-
+  
 
   return (
     <View style={styles.container}>
-      {/* Envolvendo Avatar com TouchableOpacity para torná-lo clicável */}
       <TouchableOpacity onPress={handleImageUpload}>
         <Avatar.Image
           size={100}
-          source={{
-            uri: user.profile_image
-              ? `http://172.16.6.11:5000/upload/get_image/${user.profile_image}`
-              : 'https://via.placeholder.com/100', // Uma imagem padrão caso não tenha ainda
-          }}
+          source={{ uri: getProfileImageUri() }}
           style={styles.avatar}
         />
       </TouchableOpacity>
 
       <Text style={styles.name}>{user.name}</Text>
       <Text style={styles.email}>{user.email}</Text>
-      <Text style={styles.provider}>Provedor: {user.providerType}</Text>
+      <Text style={styles.provider}>Provedor: {user.providerType ?? user.provedorType}</Text>
 
       <Button mode="contained" style={styles.uploadButton} onPress={handleLogout}>
         Logout
@@ -130,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   avatar: {
-    marginBottom: 16, // Adiciona um pouco de espaço abaixo da imagem
+    marginBottom: 16,
   },
   name: {
     fontSize: 22,

@@ -27,6 +27,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import { useNavigation } from '@react-navigation/native';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import { useUser } from 'context/UserContext';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -41,6 +42,7 @@ export default function LoginScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [rememberMe, setRememberMe] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<null | User>(null);
+  const {updateUser} = useUser()
   const {
     control,
     handleSubmit,
@@ -99,7 +101,9 @@ export default function LoginScreen() {
   
         if (res.ok) {
           await AsyncStorage.setItem('user', JSON.stringify(data.user));
+          updateUser(data.user);
           setIsAuthenticated(data.user);
+          
   
           // Redireciona o usuário para a Home
           navigation.reset({
@@ -156,6 +160,7 @@ export default function LoginScreen() {
 
       if (res.ok) {
         await AsyncStorage.setItem('user', JSON.stringify(result.user));
+        updateUser(result.user);
         setIsAuthenticated(result.user);
         navigation.reset({
           index: 0,
