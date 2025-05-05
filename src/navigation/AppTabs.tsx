@@ -1,28 +1,26 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Dimensions, Text, Platform, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Avatar } from 'react-native-paper';
 
 import HomeScreen from '~/screens/Home';
 import ProfileScreen from '~/screens/ProfileScreen';
-import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { useUser } from 'context/UserContext';
 
 const Tab = createBottomTabNavigator();
 const { width } = Dimensions.get('window');
 
-const CustomTabBarButton = (props: BottomTabBarButtonProps) => {
-  return (
-    <TouchableOpacity
-      {...props}
-      activeOpacity={1}
-      style={[props.style, { flex: 1 }]}
-    >
-      {props.children}
-    </TouchableOpacity>
-  );
-};
+interface CustomTabBarButtonProps {
+  children: React.ReactNode;
+  onPress: () => void;
+}
+
+const CustomTabBarButton = ({ children, onPress }: CustomTabBarButtonProps) => (
+  <TouchableOpacity onPress={onPress} style={styles.customButton} activeOpacity={0.2}>
+    <View style={styles.fab}>{children}</View>
+  </TouchableOpacity>
+);
 
 export default function AppTabs() {
   const { user } = useUser();
@@ -46,36 +44,91 @@ export default function AppTabs() {
 
   return (
     <Tab.Navigator
-      initialRouteName="Home"
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarShowLabel: false,
+      screenOptions={{
         tabBarStyle: styles.tabBar,
-        tabBarButton: CustomTabBarButton,
-        tabBarIcon: ({ focused }) => {
-          const isHome = route.name === 'Home';
-
-          return (
-            <View style={styles.iconWrapper}>
-              {isHome ? (
-                <MaterialCommunityIcons
-                  name={focused ? 'home' : 'home-outline'}
-                  size={28}
-                  color={focused ? '#1b1b1b' : '#A0AEC0'}
-                />
-              ) : (
-                <Avatar.Image
-                  size={28}
-                  source={{ uri: profileImageUri }}
-                />
-              )}
+        tabBarShowLabel: false,
+        headerShown: false,
+      }}>
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.icon}>
+              <MaterialCommunityIcons
+                name="home"
+                size={28}
+                color={focused ? '#2f855a' : '#a0aec0'}
+              />
+              <Text style={{ color: focused ? '#2f855a' : '#a0aec0', fontSize: 12 }}>Início</Text>
             </View>
-          );
-        },
-      })}
-    >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+          ),
+          tabBarButton: (props) => <TouchableOpacity {...props} activeOpacity={1} />,
+        }}
+      />
+
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.icon}>
+              <MaterialCommunityIcons
+                name="map-legend"
+                size={28}
+                color={focused ? '#2f855a' : '#a0aec0'}
+              />
+              <Text style={{ color: focused ? '#2f855a' : '#a0aec0', fontSize: 12 }}>Eventos</Text>
+            </View>
+          ),
+          tabBarButton: (props) => <TouchableOpacity {...props} activeOpacity={1} />,
+        }}
+      />
+
+      <Tab.Screen
+        name="Find"
+        component={HomeScreen}
+        options={{
+          tabBarButton: (props) => <CustomTabBarButton {...props} />,
+          tabBarIcon: () => <MaterialCommunityIcons name="map-search-outline" size={32} color="#fff" />,
+        }}
+      />
+
+      <Tab.Screen
+        name="Settings"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.icon}>
+              <MaterialCommunityIcons
+                name="cog"
+                size={28}
+                color={focused ? '#2f855a' : '#a0aec0'}
+              />
+              <Text style={{ color: focused ? '#2f855a' : '#a0aec0', fontSize: 12 }}>Configs</Text>
+            </View>
+          ),
+          tabBarButton: (props) => <TouchableOpacity {...props} activeOpacity={1} />,
+        }}
+      />
+
+      <Tab.Screen
+        name="maps"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.icon}>
+              <Avatar.Image
+                size={28}
+                source={{ uri: profileImageUri }}
+                style={{ backgroundColor: 'transparent' }}
+              />
+              <Text style={{ color: focused ? '#2f855a' : '#a0aec0', fontSize: 12 }}>Perfil</Text>
+            </View>
+          ),
+          tabBarButton: (props) => <TouchableOpacity {...props} activeOpacity={1} />,
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -83,25 +136,41 @@ export default function AppTabs() {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 12,
+    bottom: Platform.OS === 'ios' ? 30 : 20,
     left: 20,
     right: 20,
     backgroundColor: '#ffffff',
     borderRadius: 20,
-    height: 65,
+    height: 80,
+    shadowColor: '#38a169',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
     elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
+    borderTopWidth: 0,
   },
-  iconWrapper: {
+  icon: {
+    width: width / 4,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    top: 5,
+    top: 20,
+  },
+  customButton: {
+    top: -20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fab: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#2f855a',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 10,
   },
 });

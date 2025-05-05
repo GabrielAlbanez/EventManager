@@ -98,11 +98,10 @@ export default function ProfileScreen() {
   if (loading || !user) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#3f51b5" />
+        <ActivityIndicator size="large" color="#38a169" /> {/* Verde mais suave */}
       </View>
     );
   }
-  
 
   return (
     <View style={styles.container}>
@@ -134,11 +133,14 @@ const styles = StyleSheet.create({
   },
   avatar: {
     marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#38a169',  // Verde para borda do avatar
   },
   name: {
     fontSize: 22,
     fontWeight: 'bold',
     marginTop: 16,
+    color: '#38a169',  // Cor verde para o nome
   },
   email: {
     fontSize: 16,
@@ -151,7 +153,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   uploadButton: {
-    backgroundColor: '#3f51b5',
+    backgroundColor: '#38a169', // Cor verde para o botão
     paddingHorizontal: 20,
     marginTop: 20,
   },
