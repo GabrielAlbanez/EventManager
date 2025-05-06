@@ -30,7 +30,7 @@ import GoogleSvg from '../../assets/google.svg';
 import CustomButton from 'components/CustomButton';
 import InputField from 'components/InputField';
 import { NavigationProp } from 'types/TypeRoute';
-import { apiUrl } from 'global/urlReq';
+import { apiUrl } from '~/global/urlReq';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -212,7 +212,7 @@ export default function LoginScreen() {
                 />
               }
               fieldButtonLabel="Forgot?"
-              fieldButtonFunction={() => {}}
+              fieldButtonFunction={() => {navigation.navigate('ForgotPassword')}}
             />
           )}
         />
