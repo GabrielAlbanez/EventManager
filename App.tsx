@@ -9,16 +9,19 @@ import AuthNavigator from '~/navigation/AuthNavigator';
 import { PaperProvider } from 'react-native-paper';
 import { customTheme } from 'provider/PaperTheme';
 import { AlertNotificationRoot } from 'react-native-alert-notification';
+import { UserProvider } from 'context/UserContext';
 export default function App() {
   useEffect(() => {
     GoogleSignin.configure({
       iosClientId: '911018498691-p25344q35mgofevt2gtpq8djvdhh6b0p.apps.googleusercontent.com',
       webClientId: '911018498691-akj2ohut3f9brilpdsnosvca66aifudp.apps.googleusercontent.com',
       profileImageSize: 150,
+      offlineAccess: true, 
     });
   });
 
   return (
+    <UserProvider >
     <AlertNotificationRoot>
       <PaperProvider theme={customTheme}>
         <NavigationContainer>
@@ -27,5 +30,6 @@ export default function App() {
         </NavigationContainer>
       </PaperProvider>
     </AlertNotificationRoot>
+    </UserProvider>
   );
 }
