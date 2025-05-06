@@ -30,6 +30,7 @@ import GoogleSvg from '../../assets/google.svg';
 import CustomButton from 'components/CustomButton';
 import InputField from 'components/InputField';
 import { NavigationProp } from 'types/TypeRoute';
+import { apiUrl } from 'global/urlReq';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -75,7 +76,7 @@ export default function LoginScreen() {
 
       if (isSuccessResponse(response)) {
         const user = response.data;
-        const res = await fetch('http://172.16.6.11:5000/auth/googlee', {
+        const res = await fetch(`${apiUrl}/auth/googlee`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -127,7 +128,7 @@ export default function LoginScreen() {
   const onSubmit = async (data: LoginForm) => {
     try {
       setIsSubmiting(true);
-      const res = await fetch('http://172.16.6.11:5000/auth/login', {
+      const res = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -9,6 +9,7 @@ export type RootStackParamList = {
   Root: undefined;
   ForgotPassword : undefined;
   ResetPassword : undefined;
+  VerifyCodeScreen : { email: string };
 };
 
 export type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;

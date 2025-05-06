@@ -6,6 +6,7 @@ import { useUser } from 'context/UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
+import { apiUrl } from 'global/urlReq';
 
 export default function ProfileScreen() {
   const { user, loading, updateUser } = useUser();
@@ -41,7 +42,7 @@ export default function ProfileScreen() {
     } as any);
 
     try {
-      const res = await fetch(`http://172.16.6.11:5000/upload/profile_image/${user!.id}`, {
+      const res = await fetch(`${apiUrl}/upload/profile_image/${user!.id}`, {
         method: 'POST',
         body: formData,
       });
@@ -89,10 +90,10 @@ export default function ProfileScreen() {
     if (user.providerType === 'google') {
       return isUrl
         ? user.profile_image
-        : `http://172.16.6.11:5000/upload/get_image/${user.profile_image}`;
+        : `${apiUrl}/upload/get_image/${user.profile_image}`;
     }
 
-    return `http://172.16.6.11:5000/upload/get_image/${user.profile_image}`;
+    return `${apiUrl}/upload/get_image/${user.profile_image}`;
   };
 
   if (loading || !user) {

@@ -3,6 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Dialog, ALERT_TYPE } from 'react-native-alert-notification';
 import { useRoute } from '@react-navigation/native';
+import { apiUrl } from 'global/urlReq';
 
 export default function ResetPasswordScreen() {
   const { control, handleSubmit } = useForm<{ password: string }>();
@@ -12,7 +13,7 @@ export default function ResetPasswordScreen() {
 
   const onSubmit = async ({ password }: { password: string }) => {
     try {
-      const res = await fetch(`http://localhost:5000/auth/reset-password/${resetToken}`, {
+      const res = await fetch(`${apiUrl}/auth/reset-password/${resetToken}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),

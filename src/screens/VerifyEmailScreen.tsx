@@ -21,6 +21,7 @@ import {
   Provider as PaperProvider,
 } from 'react-native-paper';
 import {ALERT_TYPE } from 'react-native-alert-notification';
+import { apiUrl } from 'global/urlReq';
 
 const otpSchema = z.object({
   otp: z.string().min(6, 'Código deve ter 6 dígitos'),
@@ -52,7 +53,7 @@ export default function VerifyEmailScreen() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const response = await fetch('http://172.16.6.11:5000/auth/verify-email', {
+      const response = await fetch(`${apiUrl}/auth/verify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp: data.otp }),
@@ -73,7 +74,7 @@ export default function VerifyEmailScreen() {
 
   const resendOtp = async () => {
     try {
-      const response = await fetch('http://172.16.6.11:5000/auth/resend-otp', {
+      const response = await fetch(`${apiUrl}/auth/resend-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

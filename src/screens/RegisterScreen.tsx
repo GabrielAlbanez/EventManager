@@ -20,6 +20,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import { useUser } from 'context/UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiUrl } from 'global/urlReq';
 
 const registerSchema = z
   .object({
@@ -68,7 +69,7 @@ export default function RegisterScreen() {
 
       if (isSuccessResponse(response)) {
         const user = response.data;
-        const res = await fetch('http://172.16.6.11:5000/auth/googlee', {
+        const res = await fetch(`${apiUrl}/auth/googlee`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -124,7 +125,7 @@ export default function RegisterScreen() {
     };
 
     try {
-      const response = await fetch('http://172.16.6.11:5000/auth/register', {
+      const response = await fetch(`${apiUrl}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataWithProviderType),

@@ -9,3 +9,13 @@ declare module '*.svg' {
     export default content;
   
   }
+
+declare namespace NodeJS {
+
+    interface ProcessEnv {
+  
+      EXPO_DEVELOPMENT_LOCA_BIRA_API_URL?: string;
+  
+    }
+  
+  }
