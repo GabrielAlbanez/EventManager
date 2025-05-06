@@ -6,7 +6,8 @@ import InputField from 'components/InputField';
 import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification'; // ajuste conforme lib usada
-import { apiUrl } from 'global/urlReq';
+import CustomButton from 'components/CustomButton';
+import { apiUrl } from '~/global/urlReq';
 
 export default function ForgetPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -66,7 +67,7 @@ export default function ForgetPasswordScreen() {
         }
       />
 
-      <Button title="Enviar código" onPress={handleSendCode} />
+      <CustomButton label='Enviar codigo' onPress={handleSendCode} />
     </View>
   );
 }
@@ -75,6 +76,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
+    padding: 24,
   },
   title: {
     fontFamily: 'Roboto-Medium',

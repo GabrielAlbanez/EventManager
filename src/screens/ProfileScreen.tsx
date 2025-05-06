@@ -6,7 +6,7 @@ import { useUser } from 'context/UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
-import { apiUrl } from 'global/urlReq';
+import { apiUrl } from '~/global/urlReq';
 
 export default function ProfileScreen() {
   const { user, loading, updateUser } = useUser();

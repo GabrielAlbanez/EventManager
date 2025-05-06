@@ -3,7 +3,8 @@ import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Dialog, ALERT_TYPE } from 'react-native-alert-notification';
 import { useRoute } from '@react-navigation/native';
-import { apiUrl } from 'global/urlReq';
+import { apiUrl } from '~/global/urlReq';
+
 
 export default function ResetPasswordScreen() {
   const { control, handleSubmit } = useForm<{ password: string }>();

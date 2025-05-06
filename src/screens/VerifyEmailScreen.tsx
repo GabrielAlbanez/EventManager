@@ -21,7 +21,7 @@ import {
   Provider as PaperProvider,
 } from 'react-native-paper';
 import {ALERT_TYPE } from 'react-native-alert-notification';
-import { apiUrl } from 'global/urlReq';
+import { apiUrl } from '~/global/urlReq';
 
 const otpSchema = z.object({
   otp: z.string().min(6, 'Código deve ter 6 dígitos'),

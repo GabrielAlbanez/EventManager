@@ -7,6 +7,7 @@ import AppTabs from './AppTabs';
 import VerifyEmailScreen from '../screens/VerifyEmailScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
+import VerifyCodeScreen from '~/screens/VerifyCodeScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,7 +20,9 @@ export default function AuthNavigator() {
       <Stack.Screen name="VerifyEmailScreen" component={VerifyEmailScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+      <Stack.Screen name="VerifyCodeScreen" component={VerifyCodeScreen} />
       <Stack.Screen name="Root" component={AppTabs} />
+
     </Stack.Navigator>
   );
 }
