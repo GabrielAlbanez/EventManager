@@ -6,7 +6,8 @@ import InputField from 'components/InputField';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification'; // ajuste conforme sua lib
-import { apiUrl } from 'global/urlReq';
+import { apiUrl } from '~/global/urlReq';
+import CustomButton from 'components/CustomButton';
 
 export default function VerifyCodeScreen() {
   const [code, setCode] = useState('');
@@ -35,22 +36,33 @@ export default function VerifyCodeScreen() {
   };
 
   const handleVerifyCode = async () => {
-    if (!code || !password) {
+    if (!code || !password || !email) {
       return showError('Preencha todos os campos.');
     }
+    console.log('email', email);
 
     try {
-      const response = await axios.post(`${apiUrl}/atuh/verify-password-code`, {
-        email,
-        otp: code,
-        new_password: password,
+      const response = await fetch(`${apiUrl}/auth/verify-password-code`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          otp: code,
+          new_password: password,
+        }),
       });
 
-      showSuccess(response.data.message);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? 'Erro ao verificar o código. Tente novamente.');
+      }
+
+      showSuccess(data.message);
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message || 'Erro ao verificar o código. Tente novamente.';
-      showError(message);
+      showError(error.message);
     }
   };
 
@@ -64,8 +76,7 @@ export default function VerifyCodeScreen() {
         button: 'OK',
       });
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message || 'Erro ao reenviar o código.';
+      const message = error?.response?.data?.message || 'Erro ao reenviar o código.';
       showError(message);
     }
   };
@@ -79,14 +90,7 @@ export default function VerifyCodeScreen() {
         value={code}
         onChangeText={setCode}
         keyboardType="number-pad"
-        icon={
-          <MaterialIcons
-            name="pin"
-            size={20}
-            color="#22c55e"
-            style={{ marginRight: 5 }}
-          />
-        }
+        icon={<MaterialIcons name="pin" size={20} color="#22c55e" style={{ marginRight: 5 }} />}
       />
 
       <InputField
@@ -104,7 +108,7 @@ export default function VerifyCodeScreen() {
         }
       />
 
-      <Button title="Alterar senha" onPress={handleVerifyCode} />
+      <CustomButton label="Alterar senha" onPress={handleVerifyCode} />
 
       <TouchableOpacity onPress={handleResendCode} style={{ marginTop: 16 }}>
         <Text style={styles.signupLink}>Reenviar código</Text>
@@ -117,6 +121,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
+    padding: 24,
   },
   title: {
     fontFamily: 'Roboto-Medium',

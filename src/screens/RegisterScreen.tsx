@@ -20,7 +20,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import { useUser } from 'context/UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiUrl } from 'global/urlReq';
+import { apiUrl } from '~/global/urlReq';
 
 const registerSchema = z
   .object({
