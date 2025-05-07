@@ -71,12 +71,15 @@ export default function LoginScreen() {
   const handleGoogleSignIn = async () => {
     try {
       setIsSubmiting(true);
+      console.log("Verificando serviços do Google...");
       await GoogleSignin.hasPlayServices();
+      console.log("Serviços do Google verificados, tentando login...");
       const response = await GoogleSignin.signIn();
-
+      
       if (isSuccessResponse(response)) {
         const user = response.data;
-        const res = await fetch(`${apiUrl}/auth/googlee`, {
+        console.log("Login com Google bem-sucedido:", user);
+        const res = await fetch(`${apiUrl}/auth/google`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -87,14 +90,15 @@ export default function LoginScreen() {
             providerType: 'google',
           }),
         });
-
+  
         const data = await res.json();
-
+        console.log("Resposta do servidor:", data);
+  
         if (res.ok) {
-          await AsyncStorage.setItem('user', JSON.stringify(data.user));
+          console.log("Login com Google confirmado, armazenando tokens...");
+          await AsyncStorage.setItem('access_token', data.access_token);
+          await AsyncStorage.setItem('refresh_token', data.refresh_token);
           updateUser(data.user);
-          setIsAuthenticated(data.user);
-
           navigation.reset({
             index: 0,
             routes: [{ name: 'Root', params: { screen: 'Home' } }],
@@ -106,6 +110,7 @@ export default function LoginScreen() {
         showError('Erro ao fazer login com o Google');
       }
     } catch (error) {
+      console.error("Erro no login com Google:", error);
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.IN_PROGRESS:
@@ -124,10 +129,11 @@ export default function LoginScreen() {
       setIsSubmiting(false);
     }
   };
-
+  
   const onSubmit = async (data: LoginForm) => {
     try {
       setIsSubmiting(true);
+      console.log("Tentando fazer login com credenciais...");
       const res = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -137,13 +143,14 @@ export default function LoginScreen() {
           providerType: 'credentials',
         }),
       });
-
+  
       const result = await res.json();
-
+      console.log("Resposta de login:", result);
+  
       if (res.ok) {
-        await AsyncStorage.setItem('user', JSON.stringify(result.user));
-        updateUser(result.user);
-        setIsAuthenticated(result.user);
+        console.log("Login com credenciais bem-sucedido, armazenando tokens...");
+        await AsyncStorage.setItem('access_token', result.access_token);
+        await AsyncStorage.setItem('refresh_token', result.refresh_token);
         navigation.reset({
           index: 0,
           routes: [{ name: 'Root', params: { screen: 'Home' } }],
@@ -152,8 +159,8 @@ export default function LoginScreen() {
         showError(result.message ?? 'Erro no login, tente novamente');
       }
     } catch (err) {
+      console.error("Erro inesperado:", err);
       showError('Erro inesperado. Verifique sua conexão.');
-      console.log(err);
     } finally {
       setIsSubmiting(false);
     }

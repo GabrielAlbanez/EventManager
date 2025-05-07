@@ -13,6 +13,9 @@ export default function ProfileScreen() {
   const [isUploading, setIsUploading] = useState(false);
   const navigation = useNavigation<NavigationProp>();
 
+
+  console.log('User:', user);
+
   const handleImageUpload = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -82,6 +85,7 @@ export default function ProfileScreen() {
   };
 
   const getProfileImageUri = () => {
+
     if (!user?.profile_image) {
       return 'https://via.placeholder.com/100';
     }

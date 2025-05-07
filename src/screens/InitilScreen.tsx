@@ -1,39 +1,84 @@
 import { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NavigationProp } from 'types/TypeRoute';
 import { Avatar, ActivityIndicator } from 'react-native-paper';
 import Animated, { ZoomIn, FadeIn } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import { apiUrl } from '~/global/urlReq';
+import { useUser } from 'context/UserContext';
+import { NavigationProp } from 'types/TypeRoute';
 
 export default function InitilScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const { updateUser } = useUser();
 
   useEffect(() => {
-    const checkLogin = async () => {
+    const checkTokens = async () => {
       try {
-        const userData = await AsyncStorage.getItem('user');
-        const nextScreen = userData ? 'Root' : 'Login';
+        const accessToken = await AsyncStorage.getItem('access_token');
+        const refreshToken = await AsyncStorage.getItem('refresh_token');
 
-        setTimeout(() => {
-          navigation.reset({
-            index: 0,
-            routes: [
-              {
-                name: nextScreen,
-                params: { screen: 'Profile' }, // <- Isso vai pra aba "Profile"
-              },
-            ],
+        if (!accessToken || !refreshToken) {
+          return navigation.navigate('Login');
+        }
+
+        // Verifica validade do access token
+        const verifyResponse = await fetch(`${apiUrl}/auth/verify-access-token`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        let finalAccessToken = accessToken;
+
+        if (!verifyResponse.ok) {
+          // Tenta refresh
+          const refreshResponse = await fetch(`${apiUrl}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refreshToken }),
           });
-        }, 2000);
+
+          if (!refreshResponse.ok) {
+            return navigation.navigate('Login');
+          }
+
+          const refreshData = await refreshResponse.json();
+          finalAccessToken = refreshData.access_token;
+
+          // Atualiza os tokens
+          await AsyncStorage.setItem('access_token', refreshData.access_token);
+          await AsyncStorage.setItem('refresh_token', refreshData.refresh_token);
+        }
+
+        // Busca dados do usuário com token válido
+        const userResponse = await fetch(`${apiUrl}/auth/get-user-data`, {
+          
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${finalAccessToken}`,
+          },
+        });
+
+        if (!userResponse.ok) {
+          return navigation.navigate('Login');
+        }
+
+        const userData = await userResponse.json();
+        console.log("Dados do usuário:", userData);
+        updateUser(userData.user);
+        await AsyncStorage.setItem('user', JSON.stringify(userData.user));
+
+        navigation.replace('Root'); // ou 'AppTabs' dependendo da sua rota
       } catch (error) {
-        console.error('Erro ao verificar login:', error);
-        navigation.navigate('Login'); // fallback
+        console.error('Erro ao verificar token:', error);
+        navigation.navigate('Login');
       }
     };
 
-    checkLogin();
-  }, [navigation]);
+    checkTokens();
+  }, []);
 
   return (
     <Animated.View style={styles.container} entering={FadeIn.duration(1000)}>
