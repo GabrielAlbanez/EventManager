@@ -78,6 +78,8 @@ export default function ProfileScreen() {
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('access_token');
+      await AsyncStorage.removeItem('refresh_token');
       navigation.navigate('Login');
     } catch (error) {
       Alert.alert('Erro', 'Falha ao deslogar');
@@ -90,13 +92,16 @@ export default function ProfileScreen() {
       return 'https://via.placeholder.com/100';
     }
 
-    const isUrl = user.profile_image.startsWith('http');
-    if (user.providerType === 'google') {
+    const isUrl = user.profile_image.startsWith('https');
+    console.log('isUrl:', isUrl);
+
+    if (user.providerType ?? user.provedorType === 'google') {
       return isUrl
         ? user.profile_image
         : `${apiUrl}/upload/get_image/${user.profile_image}`;
     }
 
+    // Default case for other provider types
     return `${apiUrl}/upload/get_image/${user.profile_image}`;
   };
 
@@ -113,7 +118,7 @@ export default function ProfileScreen() {
       <TouchableOpacity onPress={handleImageUpload}>
         <Avatar.Image
           size={100}
-          source={{ uri: getProfileImageUri() }}
+          source={{ uri: getProfileImageUri()}}
           style={styles.avatar}
         />
       </TouchableOpacity>

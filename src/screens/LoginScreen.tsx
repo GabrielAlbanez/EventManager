@@ -151,6 +151,7 @@ export default function LoginScreen() {
         console.log("Login com credenciais bem-sucedido, armazenando tokens...");
         await AsyncStorage.setItem('access_token', result.access_token);
         await AsyncStorage.setItem('refresh_token', result.refresh_token);
+        updateUser(result.user);
         navigation.reset({
           index: 0,
           routes: [{ name: 'Root', params: { screen: 'Home' } }],

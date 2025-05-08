@@ -1,20 +1,33 @@
-import React, { useState } from 'react';
-import { View, Text, Button, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useTransition } from 'react';
+import { View, Text, Keyboard, StyleSheet, TouchableOpacity } from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
-import InputField from 'components/InputField';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
-import { ALERT_TYPE, Dialog } from 'react-native-alert-notification'; // ajuste conforme sua lib
+import { Dialog, ALERT_TYPE } from 'react-native-alert-notification';
 import { apiUrl } from '~/global/urlReq';
+import InputField from 'components/InputField';
 import CustomButton from 'components/CustomButton';
+import { MaterialIcons } from '@expo/vector-icons';
 
-export default function VerifyCodeScreen() {
-  const [code, setCode] = useState('');
-  const [password, setPassword] = useState('');
+const otpSchema = z.object({
+  otp: z.string().min(6, 'Código deve ter 6 dígitos'),
+});
+
+type FormData = z.infer<typeof otpSchema>;
+
+export default function VerifyEmailScreen() {
+  const { control, handleSubmit } = useForm<FormData>({
+    resolver: zodResolver(otpSchema),
+  });
+
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
-  const { email } = route.params as { email: string };
+  const { email } = route.params as any;
+
+  const [verified, setVerified] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const showError = (message: string) => {
     Dialog.show({
@@ -35,84 +48,98 @@ export default function VerifyCodeScreen() {
     });
   };
 
-  const handleVerifyCode = async () => {
-    if (!code || !password || !email) {
-      return showError('Preencha todos os campos.');
-    }
-    console.log('email', email);
-
-    try {
-      const response = await fetch(`${apiUrl}/auth/verify-password-code`, {
+  const onSubmit = (data: FormData) => {
+    startTransition(() => {
+      fetch(`${apiUrl}/auth/verify-email`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          otp: code,
-          new_password: password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message ?? 'Erro ao verificar o código. Tente novamente.');
-      }
-
-      showSuccess(data.message);
-    } catch (error: any) {
-      showError(error.message);
-    }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp: data.otp }),
+      })
+        .then(async (response) => {
+          if (response.status === 200) {
+            setVerified(true);
+            Keyboard.dismiss();
+            showSuccess('E-mail verificado com sucesso!');
+          } else {
+            const result = await response.json();
+            showError(result.message ?? 'Falha na verificação');
+          }
+        })
+        .catch(() => {
+          showError('Não foi possível verificar o código');
+        });
+    });
   };
 
-  const handleResendCode = async () => {
+  const resendOtp = async () => {
     try {
-      await axios.post(`${apiUrl}/auth/forgot-password`, { email });
-      Dialog.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: 'Código reenviado',
-        textBody: 'Verifique seu e-mail.',
-        button: 'OK',
+      const response = await fetch(`${apiUrl}/auth/resend-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       });
+
+      if (response.status === 200) {
+        Dialog.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: 'Código reenviado',
+          textBody: 'Verifique seu e-mail.',
+          button: 'OK',
+        });
+      } else {
+        const result = await response.json();
+        showError(result.message || 'Erro ao reenviar código');
+      }
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Erro ao reenviar o código.';
-      showError(message);
+      showError('Falha ao reenviar o código');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Verificar código</Text>
+      <Text style={styles.title}>Verifique seu e-mail</Text>
+      <Text style={styles.description}>
+        Um código de 6 dígitos foi enviado para <Text style={styles.email}>{email}</Text>
+      </Text>
 
-      <InputField
-        label="Código recebido"
-        value={code}
-        onChangeText={setCode}
-        keyboardType="number-pad"
-        icon={<MaterialIcons name="pin" size={20} color="#22c55e" style={{ marginRight: 5 }} />}
-      />
-
-      <InputField
-        label="Nova senha"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        icon={
-          <Ionicons
-            name="lock-closed-outline"
-            size={20}
-            color="#22c55e"
-            style={{ marginRight: 5 }}
+      {!verified && (
+        <>
+          <Controller
+            control={control}
+            name="otp"
+            render={({ field: { onChange, value }, fieldState: { error } }) => (
+              <>
+                <InputField
+                  label="Código de verificação"
+                  value={value}
+                  onChangeText={onChange}
+                  keyboardType="number-pad"
+                  editable={!isPending}
+                  icon={
+                    <MaterialIcons
+                      name="pin"
+                      size={20}
+                      color="#22c55e"
+                      style={{ marginRight: 5 }}
+                    />
+                  }
+                />
+                {error && <Text style={styles.error}>{error.message}</Text>}
+              </>
+            )}
           />
-        }
-      />
 
-      <CustomButton label="Alterar senha" onPress={handleVerifyCode} />
+          <CustomButton
+            label={isPending ? 'Verificando...' : 'Verificar'}
+            onPress={handleSubmit(onSubmit)}
+            disabled={isPending}
+          />
 
-      <TouchableOpacity onPress={handleResendCode} style={{ marginTop: 16 }}>
-        <Text style={styles.signupLink}>Reenviar código</Text>
-      </TouchableOpacity>
+          <TouchableOpacity onPress={resendOtp} style={{ marginTop: 16 }}>
+            <Text style={styles.resendText}>Reenviar código</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
@@ -120,20 +147,36 @@ export default function VerifyCodeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     padding: 24,
+    justifyContent: 'center',
+    backgroundColor: '#fff',
   },
   title: {
-    fontFamily: 'Roboto-Medium',
     fontSize: 28,
-    fontWeight: '500',
+    fontWeight: 'bold',
     color: '#14532d',
-    marginBottom: 30,
+    marginBottom: 16,
+    textAlign: 'center',
   },
-  signupLink: {
+  description: {
+    fontSize: 16,
+    color: '#374151',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  email: {
+    fontWeight: 'bold',
+    color: '#16a34a',
+  },
+  resendText: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#16a34a',
     textAlign: 'center',
+    textDecorationLine: 'underline',
+  },
+  error: {
+    color: 'red',
+    marginTop: 8,
   },
 });

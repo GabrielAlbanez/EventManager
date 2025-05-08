@@ -96,8 +96,8 @@ export default function VerifyEmailScreen() {
   return (
     <PaperProvider>
       <Portal>
-        <Dialog visible={visible} onDismiss={hideDialog}>
-          <Dialog.Title>Conta criada com sucesso! 🎉</Dialog.Title>
+        <Dialog style={{backgroundColor : "#f1f1f1"}} visible={visible} onDismiss={hideDialog}>
+          <Dialog.Title>Conta criada com sucesso!</Dialog.Title>
           <Dialog.Content>
             <Paragraph>
               Enviamos um código para <Text style={{ fontWeight: 'bold' }}>{email}</Text>. Verifique

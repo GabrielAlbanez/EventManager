@@ -31,7 +31,7 @@ export default function AppTabs() {
     }
 
     const isUrl = user.profile_image.startsWith('http');
-    if (user.providerType === 'google') {
+    if (user.providerType ?? user.provedorType  === 'google') {
       return isUrl
         ? user.profile_image
         : `http://172.16.6.11:5000/upload/get_image/${user.profile_image}`;

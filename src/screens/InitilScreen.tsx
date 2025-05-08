@@ -47,9 +47,10 @@ export default function InitilScreen() {
           const refreshData = await refreshResponse.json();
           finalAccessToken = refreshData.access_token;
 
+          console.log("Novo access token:", finalAccessToken);
+
           // Atualiza os tokens
           await AsyncStorage.setItem('access_token', refreshData.access_token);
-          await AsyncStorage.setItem('refresh_token', refreshData.refresh_token);
         }
 
         // Busca dados do usuário com token válido

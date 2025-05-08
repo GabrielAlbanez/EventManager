@@ -3,18 +3,21 @@ import React from 'react';
 
 interface CustomButtonProps {
   label: string;
+  disabled?: boolean;
   onPress: () => void;
 }
 
-export default function CustomButton({label, onPress}: CustomButtonProps) {
+export default function CustomButton({label, onPress, disabled}: CustomButtonProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
+      disabled={disabled}
       style={{
         backgroundColor: '#22c55e',
         padding: 20,
         borderRadius: 10,
         marginBottom: 30,
+        
       }}>
       <Text
         style={{
