@@ -31,6 +31,7 @@ import CustomButton from 'components/CustomButton';
 import InputField from 'components/InputField';
 import { NavigationProp } from 'types/TypeRoute';
 import { apiUrl } from '~/global/urlReq';
+import { authenticateWithBiometrics } from 'utils/authenticateWithBiometrics';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -40,8 +41,6 @@ const loginSchema = z.object({
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
-
-
 
 export default function LoginScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -71,14 +70,14 @@ export default function LoginScreen() {
   const handleGoogleSignIn = async () => {
     try {
       setIsSubmiting(true);
-      console.log("Verificando serviços do Google...");
+      console.log('Verificando serviços do Google...');
       await GoogleSignin.hasPlayServices();
-      console.log("Serviços do Google verificados, tentando login...");
+      console.log('Serviços do Google verificados, tentando login...');
       const response = await GoogleSignin.signIn();
-      
+
       if (isSuccessResponse(response)) {
         const user = response.data;
-        console.log("Login com Google bem-sucedido:", user);
+        console.log('Login com Google bem-sucedido:', user);
         const res = await fetch(`${apiUrl}/auth/google`, {
           method: 'POST',
           headers: {
@@ -90,19 +89,28 @@ export default function LoginScreen() {
             providerType: 'google',
           }),
         });
-  
+
         const data = await res.json();
-        console.log("Resposta do servidor:", data);
-  
+        console.log('Resposta do servidor:', data);
+
         if (res.ok) {
-          console.log("Login com Google confirmado, armazenando tokens...");
+          console.log('Login com Google confirmado, armazenando tokens...');
           await AsyncStorage.setItem('access_token', data.access_token);
           await AsyncStorage.setItem('refresh_token', data.refresh_token);
-          updateUser(data.user);
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Root', params: { screen: 'Home' } }],
-          });
+          try {
+            await authenticateWithBiometrics(data.user.biometric);
+            updateUser(data.user);
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Root', params: { screen: 'Home' } }],
+            });
+          } catch (biometricError) {
+            showError(
+              biometricError instanceof Error
+                ? biometricError.message
+                : 'Erro desconhecido na autenticação biométrica'
+            );
+          }
         } else {
           showError(data.message ?? 'Tente novamente mais tarde');
         }
@@ -110,7 +118,7 @@ export default function LoginScreen() {
         showError('Erro ao fazer login com o Google');
       }
     } catch (error) {
-      console.error("Erro no login com Google:", error);
+      console.error('Erro no login com Google:', error);
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.IN_PROGRESS:
@@ -129,11 +137,11 @@ export default function LoginScreen() {
       setIsSubmiting(false);
     }
   };
-  
+
   const onSubmit = async (data: LoginForm) => {
     try {
       setIsSubmiting(true);
-      console.log("Tentando fazer login com credenciais...");
+      console.log('Tentando fazer login com credenciais...');
       const res = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -143,24 +151,33 @@ export default function LoginScreen() {
           providerType: 'credentials',
         }),
       });
-  
+
       const result = await res.json();
-      console.log("Resposta de login:", result);
-  
+      console.log('Resposta de login:', result);
+
       if (res.ok) {
-        console.log("Login com credenciais bem-sucedido, armazenando tokens...");
+        console.log('Login com credenciais bem-sucedido, armazenando tokens...');
         await AsyncStorage.setItem('access_token', result.access_token);
         await AsyncStorage.setItem('refresh_token', result.refresh_token);
-        updateUser(result.user);
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Root', params: { screen: 'Home' } }],
-        });
+        try {
+          await authenticateWithBiometrics(result.data.user.biometric);
+          updateUser(result.user);
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Root', params: { screen: 'Home' } }],
+          });
+        } catch (biometricError) {
+          showError(
+            biometricError instanceof Error
+              ? biometricError.message
+              : 'Erro desconhecido na autenticação biométrica'
+          );
+        }
       } else {
         showError(result.message ?? 'Erro no login, tente novamente');
       }
     } catch (err) {
-      console.error("Erro inesperado:", err);
+      console.error('Erro inesperado:', err);
       showError('Erro inesperado. Verifique sua conexão.');
     } finally {
       setIsSubmiting(false);
@@ -220,7 +237,9 @@ export default function LoginScreen() {
                 />
               }
               fieldButtonLabel="Forgot?"
-              fieldButtonFunction={() => {navigation.navigate('ForgotPassword')}}
+              fieldButtonFunction={() => {
+                navigation.navigate('ForgotPassword');
+              }}
             />
           )}
         />
@@ -241,8 +260,7 @@ export default function LoginScreen() {
               borderRadius: 10,
               paddingHorizontal: 30,
               paddingVertical: 10,
-            }}
-          >
+            }}>
             <GoogleSvg height={24} width={24} />
           </TouchableOpacity>
         </View>

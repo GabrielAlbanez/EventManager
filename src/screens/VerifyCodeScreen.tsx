@@ -1,32 +1,20 @@
 import React, { useState, useTransition } from 'react';
 import { View, Text, Keyboard, StyleSheet, TouchableOpacity } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
+import InputField from 'components/InputField';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { Dialog, ALERT_TYPE } from 'react-native-alert-notification';
 import { apiUrl } from '~/global/urlReq';
-import InputField from 'components/InputField';
 import CustomButton from 'components/CustomButton';
-import { MaterialIcons } from '@expo/vector-icons';
 
-const otpSchema = z.object({
-  otp: z.string().min(6, 'Código deve ter 6 dígitos'),
-});
-
-type FormData = z.infer<typeof otpSchema>;
-
-export default function VerifyEmailScreen() {
-  const { control, handleSubmit } = useForm<FormData>({
-    resolver: zodResolver(otpSchema),
-  });
-
+export default function VerifyCodeScreen() {
+  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
-  const { email } = route.params as any;
+  const { email } = route.params as { email: string };
 
-  const [verified, setVerified] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const showError = (message: string) => {
@@ -48,50 +36,50 @@ export default function VerifyEmailScreen() {
     });
   };
 
-  const onSubmit = (data: FormData) => {
+  const handleVerifyCode = () => {
+    if (!code || !password || !email) {
+      return showError('Preencha todos os campos.');
+    }
+
     startTransition(() => {
-      fetch(`${apiUrl}/auth/verify-email`, {
+      fetch(`${apiUrl}/auth/verify-password-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp: data.otp }),
+        body: JSON.stringify({ email, otp: code, new_password: password }),
       })
         .then(async (response) => {
-          if (response.status === 200) {
-            setVerified(true);
-            Keyboard.dismiss();
-            showSuccess('E-mail verificado com sucesso!');
-          } else {
-            const result = await response.json();
-            showError(result.message ?? 'Falha na verificação');
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message ?? 'Erro ao verificar o código. Tente novamente.');
           }
+
+          Keyboard.dismiss();
+          showSuccess(data.message);
         })
-        .catch(() => {
-          showError('Não foi possível verificar o código');
+        .catch((error: any) => {
+          showError(error.message);
         });
     });
   };
 
-  const resendOtp = async () => {
+  const handleResendCode = async () => {
     try {
-      const response = await fetch(`${apiUrl}/auth/resend-otp`, {
+      await fetch(`${apiUrl}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
 
-      if (response.status === 200) {
-        Dialog.show({
-          type: ALERT_TYPE.SUCCESS,
-          title: 'Código reenviado',
-          textBody: 'Verifique seu e-mail.',
-          button: 'OK',
-        });
-      } else {
-        const result = await response.json();
-        showError(result.message || 'Erro ao reenviar código');
-      }
+      Dialog.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: 'Código reenviado',
+        textBody: 'Verifique seu e-mail.',
+        button: 'OK',
+      });
     } catch (error: any) {
-      showError('Falha ao reenviar o código');
+      const message = error?.response?.data?.message || 'Erro ao reenviar o código.';
+      showError(message);
     }
   };
 
@@ -102,44 +90,35 @@ export default function VerifyEmailScreen() {
         Um código de 6 dígitos foi enviado para <Text style={styles.email}>{email}</Text>
       </Text>
 
-      {!verified && (
-        <>
-          <Controller
-            control={control}
-            name="otp"
-            render={({ field: { onChange, value }, fieldState: { error } }) => (
-              <>
-                <InputField
-                  label="Código de verificação"
-                  value={value}
-                  onChangeText={onChange}
-                  keyboardType="number-pad"
-                  editable={!isPending}
-                  icon={
-                    <MaterialIcons
-                      name="pin"
-                      size={20}
-                      color="#22c55e"
-                      style={{ marginRight: 5 }}
-                    />
-                  }
-                />
-                {error && <Text style={styles.error}>{error.message}</Text>}
-              </>
-            )}
-          />
+      <InputField
+        label="Código de verificação"
+        value={code}
+        onChangeText={setCode}
+        keyboardType="number-pad"
+        editable={!isPending}
+        icon={<MaterialIcons name="pin" size={20} color="#22c55e" style={{ marginRight: 5 }} />}
+      />
 
-          <CustomButton
-            label={isPending ? 'Verificando...' : 'Verificar'}
-            onPress={handleSubmit(onSubmit)}
-            disabled={isPending}
-          />
+      <InputField
+        label="Nova senha"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        editable={!isPending}
+        icon={
+          <Ionicons name="lock-closed-outline" size={20} color="#22c55e" style={{ marginRight: 5 }} />
+        }
+      />
 
-          <TouchableOpacity onPress={resendOtp} style={{ marginTop: 16 }}>
-            <Text style={styles.resendText}>Reenviar código</Text>
-          </TouchableOpacity>
-        </>
-      )}
+      <CustomButton
+        label={isPending ? 'Alterando...' : 'Alterar senha'}
+        onPress={handleVerifyCode}
+        disabled={isPending}
+      />
+
+      <TouchableOpacity onPress={handleResendCode} style={{ marginTop: 16 }}>
+        <Text style={styles.resendText}>Reenviar código</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -174,9 +153,5 @@ const styles = StyleSheet.create({
     color: '#16a34a',
     textAlign: 'center',
     textDecorationLine: 'underline',
-  },
-  error: {
-    color: 'red',
-    marginTop: 8,
   },
 });

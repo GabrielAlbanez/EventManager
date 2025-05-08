@@ -8,6 +8,7 @@ interface User {
   email: string;
   providerType: string;
   provedorType : string;
+  biometric : boolean;
 }
 
 interface UserContextType {
