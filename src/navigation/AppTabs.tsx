@@ -7,6 +7,7 @@ import { Avatar } from 'react-native-paper';
 import HomeScreen from '~/screens/Home';
 import ProfileScreen from '~/screens/ProfileScreen';
 import { useUser } from 'context/UserContext';
+import { ConfigScreen } from '~/screens/ConfigScreen';
 
 const Tab = createBottomTabNavigator();
 const { width } = Dimensions.get('window');
@@ -96,7 +97,7 @@ export default function AppTabs() {
 
       <Tab.Screen
         name="Settings"
-        component={HomeScreen}
+        component={ConfigScreen}
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.icon}>
