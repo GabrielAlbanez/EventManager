@@ -7,6 +7,7 @@ import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { Dialog, ALERT_TYPE } from 'react-native-alert-notification';
 import { apiUrl } from '~/global/urlReq';
 import CustomButton from 'components/CustomButton';
+import { set } from 'react-hook-form';
 
 export default function VerifyCodeScreen() {
   const [code, setCode] = useState('');
@@ -15,7 +16,7 @@ export default function VerifyCodeScreen() {
   const route = useRoute();
   const { email } = route.params as { email: string };
 
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState<boolean>(false);
 
   const showError = (message: string) => {
     Dialog.show({
@@ -41,29 +42,31 @@ export default function VerifyCodeScreen() {
       return showError('Preencha todos os campos.');
     }
 
-    startTransition(() => {
-      fetch(`${apiUrl}/auth/verify-password-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp: code, new_password: password }),
+    setIsPending(true);
+
+    fetch(`${apiUrl}/auth/verify-password-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp: code, new_password: password }),
+    })
+      .then(async (response) => {
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message ?? 'Erro ao verificar o código. Tente novamente.');
+        }
+
+        Keyboard.dismiss();
+        showSuccess(data.message);
       })
-        .then(async (response) => {
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message ?? 'Erro ao verificar o código. Tente novamente.');
-          }
-
-          Keyboard.dismiss();
-          showSuccess(data.message);
-        })
-        .catch((error: any) => {
-          showError(error.message);
-        });
-    });
+      .catch((error: any) => {
+        showError(error.message);
+      });
+    setIsPending(false);
   };
 
   const handleResendCode = async () => {
+    setIsPending(true);
     try {
       await fetch(`${apiUrl}/auth/forgot-password`, {
         method: 'POST',
@@ -80,6 +83,8 @@ export default function VerifyCodeScreen() {
     } catch (error: any) {
       const message = error?.response?.data?.message || 'Erro ao reenviar o código.';
       showError(message);
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -106,18 +111,29 @@ export default function VerifyCodeScreen() {
         secureTextEntry
         editable={!isPending}
         icon={
-          <Ionicons name="lock-closed-outline" size={20} color="#22c55e" style={{ marginRight: 5 }} />
+          <Ionicons
+            name="lock-closed-outline"
+            size={20}
+            color="#22c55e"
+            style={{ marginRight: 5 }}
+          />
         }
       />
 
       <CustomButton
+        style={isPending ? { opacity: 0.5 } : {}}
         label={isPending ? 'Alterando...' : 'Alterar senha'}
         onPress={handleVerifyCode}
         disabled={isPending}
       />
 
-      <TouchableOpacity onPress={handleResendCode} style={{ marginTop: 16 }}>
-        <Text style={styles.resendText}>Reenviar código</Text>
+      <TouchableOpacity
+        disabled={isPending}
+        onPress={handleResendCode}
+        style={isPending ? { opacity: 0.5, marginTop: 16 } : { marginTop: 16 }}>
+        <Text style={styles.resendText}>
+          {isPending ? 'Reenviando o código...' : 'Reenviar código'}
+        </Text>
       </TouchableOpacity>
     </View>
   );

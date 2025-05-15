@@ -1,24 +1,14 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  TextInputProps,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, set } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import * as AuthSession from 'expo-auth-session';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   GoogleSignin,
-  User,
   isSuccessResponse,
   isErrorWithCode,
   statusCodes,
@@ -44,9 +34,9 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<null | User>(null);
   const { updateUser } = useUser();
+
+  const [submiting, setSubmiting] = useState(false);
 
   const {
     control,
@@ -55,8 +45,6 @@ export default function LoginScreen() {
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
-
-  const [submiting, setIsSubmiting] = useState(false);
 
   const showError = (message: string) => {
     Dialog.show({
@@ -69,7 +57,6 @@ export default function LoginScreen() {
 
   const handleGoogleSignIn = async () => {
     try {
-      setIsSubmiting(true);
       console.log('Verificando serviços do Google...');
       await GoogleSignin.hasPlayServices();
       console.log('Serviços do Google verificados, tentando login...');
@@ -133,14 +120,12 @@ export default function LoginScreen() {
       } else {
         console.log('Erro inesperado:', error);
       }
-    } finally {
-      setIsSubmiting(false);
     }
   };
 
   const onSubmit = async (data: LoginForm) => {
+    setSubmiting(true);
     try {
-      setIsSubmiting(true);
       console.log('Tentando fazer login com credenciais...');
       const res = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST',
@@ -180,7 +165,7 @@ export default function LoginScreen() {
       console.error('Erro inesperado:', err);
       showError('Erro inesperado. Verifique sua conexão.');
     } finally {
-      setIsSubmiting(false);
+      setSubmiting(false);
     }
   };
 
@@ -245,7 +230,12 @@ export default function LoginScreen() {
         />
         {errors.Senha && <Text style={styles.errorText}>{errors.Senha.message}</Text>}
 
-        <CustomButton label="Login" onPress={handleSubmit(onSubmit)} />
+        <CustomButton
+          style={submiting ? { opacity: 0.5 } : {}}
+          label={submiting ? 'Entrando...' : 'Login'}
+          disabled={submiting}
+          onPress={() => handleSubmit(onSubmit)()}
+        />
 
         <Text style={{ textAlign: 'center', color: '#666', marginBottom: 30 }}>
           Ou entre com...

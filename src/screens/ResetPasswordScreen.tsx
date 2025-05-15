@@ -1,18 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Dialog, ALERT_TYPE } from 'react-native-alert-notification';
 import { useRoute } from '@react-navigation/native';
 import { apiUrl } from '~/global/urlReq';
 
-
 export default function ResetPasswordScreen() {
   const { control, handleSubmit } = useForm<{ password: string }>();
   const route = useRoute();
   const { resetToken } = route.params as { resetToken: string };
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async ({ password }: { password: string }) => {
+    setIsSubmitting(true);
+
     try {
       const res = await fetch(`${apiUrl}/auth/reset-password/${resetToken}`, {
         method: 'POST',
@@ -36,6 +37,8 @@ export default function ResetPasswordScreen() {
         textBody: err.message,
         button: 'OK',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -59,8 +62,12 @@ export default function ResetPasswordScreen() {
         )}
       />
 
-      <View style={styles.buttonContainer}>
-        <Button title="Redefinir senha" onPress={handleSubmit(onSubmit)} />
+      <View style={[styles.buttonContainer, isSubmitting && { opacity: 0.5 }]}>
+        <Button
+          title={isSubmitting ? 'Redefinindo...' : 'Redefinir senha'}
+          onPress={handleSubmit(onSubmit)}
+          disabled={isSubmitting}
+        />
       </View>
     </View>
   );

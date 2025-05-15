@@ -46,9 +46,7 @@ export default function RegisterScreen() {
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
   });
-  const [agreeTerms, setAgreeTerms] = useState(false);
 
-  const [submiting, setIsSubmiting] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<null | User>(null);
   const { updateUser } = useUser();
 
@@ -63,7 +61,6 @@ export default function RegisterScreen() {
 
   const handleGoogleSignIn = async () => {
     try {
-      setIsSubmiting(true);
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
 
@@ -113,9 +110,7 @@ export default function RegisterScreen() {
       } else {
         console.log('Erro inesperado:', error);
       }
-    } finally {
-      setIsSubmiting(false);
-    }
+    } 
   };
 
   const onSubmit = async (data: RegisterForm) => {
@@ -265,7 +260,7 @@ export default function RegisterScreen() {
           <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>
         )}
 
-        <CustomButton label="Register" onPress={handleFormSubmit} />
+        <CustomButton label={isPending ? "Registrando..."  : "Registre-se"} disabled={isPending} onPress={handleFormSubmit} />
 
         <View style={styles.footer}>
           <Text>Already registered?</Text>

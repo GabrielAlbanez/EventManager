@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
 import InputField from 'components/InputField';
 import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
-import { ALERT_TYPE, Dialog } from 'react-native-alert-notification'; // ajuste conforme lib usada
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 import CustomButton from 'components/CustomButton';
 import { apiUrl } from '~/global/urlReq';
 
 export default function ForgetPasswordScreen() {
   const [email, setEmail] = useState('');
+  const [isPending, setIsPending] = useState(false);
   const navigation = useNavigation<NavigationProp>();
 
   const showError = (message: string) => {
@@ -36,15 +37,17 @@ export default function ForgetPasswordScreen() {
       return showError('Por favor, preencha o email.');
     }
 
+    setIsPending(true);
+
     try {
       const response = await axios.post(`${apiUrl}/auth/forgot-password`, { email });
-
       showSuccess(response.data.message);
       navigation.navigate('VerifyCodeScreen', { email });
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message || 'Erro ao enviar o código. Tente novamente.';
+      const message = error?.response?.data?.message || 'Erro ao enviar o código. Tente novamente.';
       showError(message);
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -67,7 +70,13 @@ export default function ForgetPasswordScreen() {
         }
       />
 
-      <CustomButton label='Enviar codigo' onPress={handleSendCode} />
+      <CustomButton
+        style={isPending ? { opacity: 0.5 } : {}}
+        label={isPending ? 'Enviando...' : 'Enviar Código'}
+        disabled={isPending}
+        onPress={handleSendCode}
+      />
+
     </View>
   );
 }

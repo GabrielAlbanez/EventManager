@@ -1,26 +1,12 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  StyleSheet,
-  Keyboard,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Keyboard } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NavigationProp } from 'types/TypeRoute';
-import {
-  Portal,
-  Dialog,
-  Paragraph,
-  Button,
-  Provider as PaperProvider,
-} from 'react-native-paper';
-import {ALERT_TYPE } from 'react-native-alert-notification';
+import { Portal, Dialog, Paragraph, Button, Provider as PaperProvider } from 'react-native-paper';
+import { ALERT_TYPE } from 'react-native-alert-notification';
 import { apiUrl } from '~/global/urlReq';
 
 const otpSchema = z.object({
@@ -41,6 +27,7 @@ export default function VerifyEmailScreen() {
   const [visible, setVisible] = useState(showDialog);
   const [verified, setVerified] = useState(false);
   const [successDialogVisible, setSuccessDialogVisible] = useState(false);
+  const [isPending, setIsPending] = useState(false);
 
   const hideDialog = () => setVisible(false);
   const hideSuccessDialog = () => {
@@ -48,10 +35,8 @@ export default function VerifyEmailScreen() {
     navigation.navigate('Login');
   };
 
-
-
-
   const onSubmit = async (data: FormData) => {
+    setIsPending(true);
     try {
       const response = await fetch(`${apiUrl}/auth/verify-email`, {
         method: 'POST',
@@ -69,10 +54,13 @@ export default function VerifyEmailScreen() {
       }
     } catch (error: any) {
       Alert.alert('Erro', 'Não foi possível verificar o código');
+    } finally {
+      setIsPending(false);
     }
   };
 
   const resendOtp = async () => {
+    setIsPending(true);
     try {
       const response = await fetch(`${apiUrl}/auth/resend-otp`, {
         method: 'POST',
@@ -90,13 +78,15 @@ export default function VerifyEmailScreen() {
       }
     } catch (error: any) {
       Alert.alert('Erro', 'Falha ao reenviar o código');
+    } finally {
+      setIsPending(false);
     }
   };
 
   return (
     <PaperProvider>
       <Portal>
-        <Dialog style={{backgroundColor : "#f1f1f1"}} visible={visible} onDismiss={hideDialog}>
+        <Dialog style={{ backgroundColor: '#f1f1f1' }} visible={visible} onDismiss={hideDialog}>
           <Dialog.Title>Conta criada com sucesso!</Dialog.Title>
           <Dialog.Content>
             <Paragraph>
@@ -147,12 +137,18 @@ export default function VerifyEmailScreen() {
               )}
             />
 
-            <TouchableOpacity style={styles.button} onPress={handleSubmit(onSubmit)}>
-              <Text style={styles.buttonText}>Verificar</Text>
+            <TouchableOpacity
+              disabled={isPending}
+              style={[styles.button, isPending && { opacity: 0.5 }]}
+              onPress={handleSubmit(onSubmit)}>
+              <Text style={styles.buttonText}>{isPending ? "verificando..." : "verificar"}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={resendOtp}>
-              <Text style={styles.resend}>Reenviar código</Text>
+            <TouchableOpacity
+              disabled={isPending}
+              style={[isPending && { opacity: 0.5 }]}
+              onPress={resendOtp}>
+              <Text style={styles.resend}>{isPending ? "re-enviando o codigo..." : "enviar novamente o codigo"}</Text>
             </TouchableOpacity>
           </>
         ) : null}

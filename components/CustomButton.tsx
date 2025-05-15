@@ -5,9 +5,10 @@ interface CustomButtonProps {
   label: string;
   disabled?: boolean;
   onPress: () => void;
+  style?: object;
 }
 
-export default function CustomButton({label, onPress, disabled}: CustomButtonProps) {
+export default function CustomButton({label, onPress, disabled, style}: CustomButtonProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -17,6 +18,7 @@ export default function CustomButton({label, onPress, disabled}: CustomButtonPro
         padding: 20,
         borderRadius: 10,
         marginBottom: 30,
+        ...style
         
       }}>
       <Text

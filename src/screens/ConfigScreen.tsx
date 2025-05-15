@@ -1,9 +1,10 @@
 import React, { useState, useTransition } from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { apiUrl } from '~/global/urlReq';
-import { Dialog, ALERT_TYPE } from 'react-native-alert-notification';
+import { Dialog, ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { useUser } from 'context/UserContext';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const ConfigScreen = () => {
   const { user } = useUser();
@@ -11,31 +12,41 @@ export const ConfigScreen = () => {
   const [isBiometricEnabled, setIsBiometricEnabled] = useState<boolean>(user?.biometric ?? false);
   const [isPending, startTransition] = useTransition();
 
-  const handleToggleBiometric = (value: boolean) => {
+  const handleToggleBiometric = async (value: boolean) => {
+    const accessToken = await AsyncStorage.getItem('access_token');
+
     setIsBiometricEnabled(value);
 
     startTransition(() => {
-      fetch(`http://172.16.6.11:5000:/user/settings/${user?.id}/biometric`, {
-        method: 'PATCH',
+      fetch(`http://172.16.6.11:5000/auth/user/settings/biometric`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ biometric: value }),
       })
-        .then(async res => {
+        .then(async (res) => {
           if (!res.ok) {
             const data = await res.json();
-            throw new Error(data.message || 'Erro ao salvar preferência');
+            throw new Error(data.message ?? 'Erro ao salvar preferência');
+          } else {
+            // const updatedUser = { ...user, biometric: value };
+
+            Toast.show({
+              type: ALERT_TYPE.SUCCESS,
+              title: 'Sucesso',
+              textBody: "Preferência atualizada com sucesso",
+            });
           }
         })
-        .catch(error => {
-          Dialog.show({
+        .catch((error) => {
+          Toast.show({
             type: ALERT_TYPE.DANGER,
             title: 'Erro',
             textBody: error.message,
-            button: 'OK',
           });
-          setIsBiometricEnabled(prev => !prev); // desfaz alteração
+          setIsBiometricEnabled((prev) => !prev); // desfaz alteração
         });
     });
   };
@@ -47,8 +58,19 @@ export const ConfigScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-        <MaterialCommunityIcons name="account-cog-outline" size={32} color="#1b1b1b" style={{ marginRight: 8 }} />
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 24,
+        }}>
+        <MaterialCommunityIcons
+          name="account-cog-outline"
+          size={32}
+          color="#1b1b1b"
+          style={{ marginRight: 8 }}
+        />
       </View>
 
       <View style={styles.item}>
@@ -102,14 +124,14 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     paddingHorizontal: 15,
     justifyContent: 'space-between',
-    borderWidth   : 1,
-    borderRadius  : 20,
+    borderWidth: 1,
+    borderRadius: 20,
     paddingVertical: 17,
     backgroundColor: '#ffffff',
     shadowColor: '#38a169',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
-    shadowRadius:7,
+    shadowRadius: 7,
     elevation: 12, // sombra Android
     borderBottomWidth: 0,
     borderTopWidth: 0,
@@ -117,7 +139,6 @@ const styles = StyleSheet.create({
     borderRightWidth: 0,
     borderStyle: 'solid',
     borderColor: '#e5e7eb',
-
   },
   label: {
     flex: 1,
