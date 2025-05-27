@@ -1,26 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Avatar, Button } from 'react-native-paper';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { useNavigation } from '@react-navigation/native';
-import { NavigationProp } from 'types/TypeRoute';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import Mapbox from '@rnmapbox/maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import EventMap from 'components/EventMap';
+
+Mapbox.setAccessToken('pk.eyJ1IjoiZ2FicmllbGxiYW5leiIsImEiOiJjbWEyaTB2YTEyNDBmMnJxMW9kaGg1OGQzIn0.psAHWxarUpQbkKvrVZh8KA');
 
 export default function HomeScreen() {
-  
-
   return (
-    <View style={styles.container}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Home Screen</Text>
-    </View>
+    <EventMap />
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 100,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  }
-});

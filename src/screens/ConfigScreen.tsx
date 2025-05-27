@@ -1,20 +1,23 @@
-import React, { useState, useTransition } from 'react';
-import { View, Text, StyleSheet, Switch } from 'react-native';
-import { apiUrl } from '~/global/urlReq';
-import { Dialog, ALERT_TYPE, Toast } from 'react-native-alert-notification';
+import React, { useTransition } from 'react';
+import { View, Text, Switch, StyleSheet } from 'react-native';
+import { useTheme } from 'react-native-paper';
 import { useUser } from 'context/UserContext';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Toast, ALERT_TYPE } from 'react-native-alert-notification';
+import { useThemeContext } from 'context/ThemeProvider';
 
 export const ConfigScreen = () => {
   const { user } = useUser();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isBiometricEnabled, setIsBiometricEnabled] = useState<boolean>(user?.biometric ?? false);
+  const { isDark, toggleTheme } = useThemeContext();
+  const theme = useTheme();
+  const [isBiometricEnabled, setIsBiometricEnabled] = React.useState<boolean>(user?.biometric ?? false);
   const [isPending, startTransition] = useTransition();
+
+  const s = styles(theme); // estilos baseados no tema
 
   const handleToggleBiometric = async (value: boolean) => {
     const accessToken = await AsyncStorage.getItem('access_token');
-
     setIsBiometricEnabled(value);
 
     startTransition(() => {
@@ -30,15 +33,12 @@ export const ConfigScreen = () => {
           if (!res.ok) {
             const data = await res.json();
             throw new Error(data.message ?? 'Erro ao salvar preferência');
-          } else {
-            // const updatedUser = { ...user, biometric: value };
-
-            Toast.show({
-              type: ALERT_TYPE.SUCCESS,
-              title: 'Sucesso',
-              textBody: "Preferência atualizada com sucesso",
-            });
           }
+          Toast.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: 'Sucesso',
+            textBody: 'Preferência atualizada com sucesso',
+          });
         })
         .catch((error) => {
           Toast.show({
@@ -51,113 +51,98 @@ export const ConfigScreen = () => {
     });
   };
 
-  const handleToggleDarkMode = (value: boolean) => {
-    setIsDarkMode(value);
-    // Integrar com ThemeContext ou AsyncStorage se necessário
-  };
-
   return (
-    <View style={styles.container}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 24,
-        }}>
+    <View style={s.container}>
+      <View style={s.iconHeader}>
         <MaterialCommunityIcons
           name="account-cog-outline"
           size={32}
-          color="#1b1b1b"
+          color={theme.colors.onSurface}
           style={{ marginRight: 8 }}
         />
       </View>
 
-      <View style={styles.item}>
-        <View style={styles.iconContainer}>
+      <View style={s.item}>
+        <View style={s.iconContainer}>
           <MaterialCommunityIcons
-            name={isDarkMode ? 'moon-waning-crescent' : 'white-balance-sunny'}
+            name={isDark ? 'moon-waning-crescent' : 'white-balance-sunny'}
             size={24}
-            color="#14532d"
+            color={theme.colors.onSurface}
           />
         </View>
-        <Text style={styles.label}>Modo Escuro</Text>
+        <Text style={s.label}>Modo Escuro</Text>
         <Switch
-          value={isDarkMode}
-          onValueChange={handleToggleDarkMode}
-          thumbColor={isDarkMode ? '#16a34a' : '#ccc'}
+          value={isDark}
+          onValueChange={toggleTheme}
+          thumbColor={isDark ? theme.colors.primary : '#ccc'}
         />
       </View>
 
-      <View style={styles.item}>
-        <View style={styles.iconContainer}>
-          <MaterialCommunityIcons name="fingerprint" size={24} color="#14532d" />
+      <View style={s.item}>
+        <View style={s.iconContainer}>
+          <MaterialCommunityIcons name="fingerprint" size={24} color={theme.colors.onSurface} />
         </View>
-        <Text style={styles.label}>Usar digital para login</Text>
+        <Text style={s.label}>Usar digital para login</Text>
         <Switch
           value={isBiometricEnabled}
           onValueChange={handleToggleBiometric}
           disabled={isPending}
-          thumbColor={isBiometricEnabled ? '#16a34a' : '#ccc'}
+          thumbColor={isBiometricEnabled ? theme.colors.primary : '#ccc'}
         />
       </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 30,
-    paddingTop: 70,
-    backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 28,
-    color: '#14532d',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
-    paddingHorizontal: 15,
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingVertical: 17,
-    backgroundColor: '#ffffff',
-    shadowColor: '#38a169',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 7,
-    elevation: 12, // sombra Android
-    borderBottomWidth: 0,
-    borderTopWidth: 0,
-    borderLeftWidth: 0,
-    borderRightWidth: 0,
-    borderStyle: 'solid',
-    borderColor: '#e5e7eb',
-  },
-  label: {
-    flex: 1,
-    fontSize: 16,
-    color: '#374151',
-    marginLeft: 12,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#ffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-    elevation: 4, // sombra Android
-    shadowColor: '#000', // sombra iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-});
+const styles = (theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 30,
+      paddingTop: 70,
+      backgroundColor: theme.colors.background,
+    },
+    iconHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 24,
+    },
+    item: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginVertical: 16,
+      paddingHorizontal: 15,
+      justifyContent: 'space-between',
+      borderRadius: 20,
+      paddingVertical: 17,
+      backgroundColor: theme.colors.surface,
+      shadowColor: theme.colors.primary,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.25,
+      shadowRadius: 7,
+      elevation: 12,
+      borderColor: theme.colors.outline ?? '#e5e7eb',
+      borderWidth: 1,
+    },
+    label: {
+      flex: 1,
+      fontSize: 16,
+      color: theme.colors.onSurface,
+      marginLeft: 12,
+    },
+    iconContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 8,
+      elevation: 4,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+    },
+  });
