@@ -11,6 +11,19 @@
     },
     "plugins": [
       [
+        "expo-system-ui",
+        {
+          "androidNavigationBar": {
+            "visible": false,
+            "barStyle": "light-content"
+          },
+          "androidStatusBar": {
+            "visible": false,
+            "barStyle": "light-content"
+          }
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "Permitir que o aplicativo acesse sua câmera."
@@ -30,6 +43,7 @@
         }
       ]
     ],
+
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -56,6 +70,10 @@
         "projectId": "12e1f1d5-9071-4741-b0bc-63419a0cdf21"
       }
     },
-    "owner": "gabrel_albanez"
+    "owner": "gabrel_albanez",
+    "androidStatusBar": {
+      "hidden": true,
+      "translucent": true
+    }
   }
 }
