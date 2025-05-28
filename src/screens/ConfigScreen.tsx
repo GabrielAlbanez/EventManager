@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Toast, ALERT_TYPE } from 'react-native-alert-notification';
 import { useThemeContext } from 'context/ThemeProvider';
+import { MD3Theme } from 'react-native-paper';
 
 export const ConfigScreen = () => {
   const { user } = useUser();
@@ -94,7 +95,9 @@ export const ConfigScreen = () => {
   );
 };
 
-const styles = (theme) =>
+
+
+const styles = (theme: MD3Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,

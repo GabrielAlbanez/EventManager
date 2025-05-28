@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import Mapbox, { Camera, LocationPuck } from '@rnmapbox/maps';
 import * as Location from 'expo-location';
 import { ACESSTOKEN } from '~/global/urlReq';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from 'react-native-paper';
+import { useThemeContext } from 'context/ThemeProvider';
 
 Mapbox.setAccessToken(ACESSTOKEN);
 
@@ -10,6 +13,8 @@ export default function EventMap() {
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [isAnimating, setIsAnimating] = useState(true);
   const cameraRef = useRef<Camera>(null);
+  const isDark = useThemeContext();
+  const theme = useTheme();
 
   useEffect(() => {
     (async () => {
@@ -32,8 +37,8 @@ export default function EventMap() {
     if (location && cameraRef.current) {
       cameraRef.current.setCamera({
         centerCoordinate: [location.longitude, location.latitude],
-        zoomLevel: 16,
-        pitch: 50,
+        zoomLevel: 17,
+        pitch: 60,
         animationMode: 'flyTo',
         animationDuration: 500,
       });
@@ -44,50 +49,43 @@ export default function EventMap() {
     <View style={styles.container}>
       <Mapbox.MapView
         style={styles.map}
-        styleURL="mapbox://styles/mapbox/streets-v11"
+        styleURL={theme.dark ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/streets-v12"}
         scaleBarEnabled={false}
         scrollEnabled={!isAnimating}
         zoomEnabled={!isAnimating}
         pitchEnabled={!isAnimating}
         rotateEnabled={!isAnimating}
-        logoEnabled={false}
-      >
+        logoEnabled={false}>
         {location && (
           <>
             <Camera
               ref={cameraRef}
               centerCoordinate={[location.longitude, location.latitude]}
-              zoomLevel={16}
-              pitch={50}
               animationMode="flyTo"
               animationDuration={500}
+              zoomLevel={17}
+              pitch={60}
+              heading={20}
             />
-            <LocationPuck
-              pulsing="default"
-              scale={1.5}
-            />
-
-            <Mapbox.FillExtrusionLayer
-              id="3d-buildings"
-              sourceID="composite"
-              sourceLayerID="building"
-              filter={['==', 'extrude', 'true']}
-              style={{
-                fillExtrusionColor: '#aaa',
-                fillExtrusionHeight: ['get', 'height'],
-                fillExtrusionBase: ['get', 'min_height'],
-                fillExtrusionOpacity: 0.6,
-              }}
-              minZoomLevel={15}
-              maxZoomLevel={22}
-            />
+            <LocationPuck pulsing="default" scale={1.5} />
           </>
         )}
       </Mapbox.MapView>
 
-      {/* Botão flutuante de localização */}
-      <TouchableOpacity style={styles.locateButton} onPress={handleRecenter}>
-        <Text style={styles.buttonText}>📍</Text>
+      <TouchableOpacity
+        style={[
+          styles.locateButton,
+          {
+            backgroundColor: theme.colors.elevation?.level2 ?? theme.colors.background,
+            shadowColor: theme.dark ? '#000' : '#aaa',
+          },
+        ]}
+        onPress={handleRecenter}>
+        <MaterialIcons
+          name="location-searching"
+          size={20}
+          color={theme.colors.primary}
+        />
       </TouchableOpacity>
     </View>
   );
@@ -102,19 +100,14 @@ const styles = StyleSheet.create({
   },
   locateButton: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#fff',
+    left: 10,
+    top: 60,
     padding: 12,
     borderRadius: 30,
     elevation: 5,
-    zIndex: 999, // <- garante que fique acima
-    shadowColor: '#000',
+    zIndex: 999,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
-  },
-  buttonText: {
-    fontSize: 20,
   },
 });

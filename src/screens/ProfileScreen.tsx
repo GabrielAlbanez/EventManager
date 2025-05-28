@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { ActivityIndicator, Avatar, Button } from 'react-native-paper';
+import { ActivityIndicator, Avatar, Button, useTheme } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { useUser } from 'context/UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,9 +12,7 @@ export default function ProfileScreen() {
   const { user, loading, updateUser } = useUser();
   const [isUploading, setIsUploading] = useState(false);
   const navigation = useNavigation<NavigationProp>();
-
-
-  console.log('User:', user);
+  const theme = useTheme();
 
   const handleImageUpload = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -54,15 +52,14 @@ export default function ProfileScreen() {
 
       if (res.ok) {
         Alert.alert('Sucesso', 'Imagem de perfil atualizada');
-        if (!user?.id) {
-          throw new Error('User ID is undefined');
-        }
+
+        if (!user?.id) return; // Garante que user e id existem
 
         const updatedUser = {
           ...user,
-          id: user.id, // Ensure id is explicitly set and non-optional
           profile_image: data.image_name,
         };
+        
         updateUser(updatedUser);
       } else {
         Alert.alert('Erro', data.error || 'Falha ao atualizar a imagem');
@@ -87,13 +84,11 @@ export default function ProfileScreen() {
   };
 
   const getProfileImageUri = () => {
-
     if (!user?.profile_image) {
       return 'https://via.placeholder.com/100';
     }
 
     const isUrl = user.profile_image.startsWith('https');
-    console.log('isUrl:', isUrl);
 
     if (user.providerType ?? user.provedorType === 'google') {
       return isUrl
@@ -101,33 +96,43 @@ export default function ProfileScreen() {
         : `${apiUrl}/upload/get_image/${user.profile_image}`;
     }
 
-    // Default case for other provider types
     return `${apiUrl}/upload/get_image/${user.profile_image}`;
   };
 
   if (loading || !user) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#38a169" /> {/* Verde mais suave */}
+      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={handleImageUpload}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <TouchableOpacity onPress={handleImageUpload} disabled={isUploading}>
         <Avatar.Image
           size={100}
-          source={{ uri: getProfileImageUri()}}
-          style={styles.avatar}
+          source={{ uri: getProfileImageUri() }}
+          style={[
+            styles.avatar,
+          ]}
         />
       </TouchableOpacity>
 
-      <Text style={styles.name}>{user.name}</Text>
-      <Text style={styles.email}>{user.email}</Text>
-      <Text style={styles.provider}>Provedor: {user.providerType ?? user.provedorType}</Text>
+      <Text style={[styles.name, { color: theme.colors.onBackground }]}>{user.name}</Text>
+      <Text style={[styles.email, { color: theme.colors.onBackground }]}>{user.email}</Text>
+      <Text style={[styles.provider, { color: theme.colors.onBackground }]}>
+        Provedor: {user.providerType ?? user.provedorType}
+      </Text>
 
-      <Button mode="contained" style={styles.uploadButton} onPress={handleLogout}>
+      <Button
+        mode="contained"
+        style={[styles.uploadButton, { backgroundColor: theme.colors.primary }]}
+        labelStyle={{ color: theme.colors.onPrimary }}
+        onPress={handleLogout}
+        loading={isUploading}
+        disabled={isUploading}
+      >
         Logout
       </Button>
     </View>
@@ -135,36 +140,36 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
     paddingTop: 100,
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   avatar: {
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#38a169',  // Verde para borda do avatar
   },
   name: {
     fontSize: 22,
     fontWeight: 'bold',
-    marginTop: 16,
-    color: '#38a169',  // Cor verde para o nome
+    marginBottom: 4,
   },
   email: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   provider: {
     fontSize: 14,
-    color: '#999',
     marginBottom: 24,
   },
   uploadButton: {
-    backgroundColor: '#38a169', // Cor verde para o botão
-    paddingHorizontal: 20,
-    marginTop: 20,
+    width: '80%',
+    borderRadius: 8,
+    paddingVertical: 6,
   },
 });

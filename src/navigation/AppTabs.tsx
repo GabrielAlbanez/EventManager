@@ -1,13 +1,21 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, StyleSheet, Dimensions, Text, Platform, TouchableOpacity } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  Text,
+  Platform,
+  TouchableOpacity,
+} from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Avatar } from 'react-native-paper';
+import { Avatar, useTheme } from 'react-native-paper';
 
 import HomeScreen from '~/screens/Home';
 import ProfileScreen from '~/screens/ProfileScreen';
 import { useUser } from 'context/UserContext';
 import { ConfigScreen } from '~/screens/ConfigScreen';
+import { useThemeContext } from 'context/ThemeProvider';
 
 const Tab = createBottomTabNavigator();
 const { width } = Dimensions.get('window');
@@ -25,6 +33,8 @@ const CustomTabBarButton = ({ children, onPress }: CustomTabBarButtonProps) => (
 
 export default function AppTabs() {
   const { user } = useUser();
+  const { isDark, toggleTheme } = useThemeContext();
+  const theme = useTheme();
 
   const getProfileImageUri = () => {
     if (!user?.profile_image) {
@@ -32,7 +42,7 @@ export default function AppTabs() {
     }
 
     const isUrl = user.profile_image.startsWith('http');
-    if (user.providerType ?? user.provedorType  === 'google') {
+    if (user.providerType ?? user.provedorType === 'google') {
       return isUrl
         ? user.profile_image
         : `http://172.16.6.11:5000/upload/get_image/${user.profile_image}`;
@@ -46,10 +56,14 @@ export default function AppTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          { backgroundColor: theme.colors.surface, left : 25 , right : 25 }, // adapta à cor do tema
+        ],
         tabBarShowLabel: false,
         headerShown: false,
-      }}>
+      }}
+    >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
@@ -59,9 +73,11 @@ export default function AppTabs() {
               <MaterialCommunityIcons
                 name="home"
                 size={28}
-                color={focused ? '#2f855a' : '#a0aec0'}
+                color={focused ? theme.colors.primary : theme.colors.outline}
               />
-              <Text style={{ color: focused ? '#2f855a' : '#a0aec0', fontSize: 12 }}>Início</Text>
+              <Text style={{ color: focused ? theme.colors.primary : theme.colors.outline, fontSize: 12 }}>
+                Início
+              </Text>
             </View>
           ),
           tabBarButton: (props) => <TouchableOpacity {...props} activeOpacity={1} />,
@@ -77,9 +93,11 @@ export default function AppTabs() {
               <MaterialCommunityIcons
                 name="map-legend"
                 size={28}
-                color={focused ? '#2f855a' : '#a0aec0'}
+                color={focused ? theme.colors.primary : theme.colors.outline}
               />
-              <Text style={{ color: focused ? '#2f855a' : '#a0aec0', fontSize: 12 }}>Eventos</Text>
+              <Text style={{ color: focused ? theme.colors.primary : theme.colors.outline, fontSize: 12 }}>
+                Eventos
+              </Text>
             </View>
           ),
           tabBarButton: (props) => <TouchableOpacity {...props} activeOpacity={1} />,
@@ -91,7 +109,9 @@ export default function AppTabs() {
         component={HomeScreen}
         options={{
           tabBarButton: (props) => <CustomTabBarButton {...props} />,
-          tabBarIcon: () => <MaterialCommunityIcons name="map-search-outline" size={32} color="#fff" />,
+          tabBarIcon: () => (
+            <MaterialCommunityIcons name="map-search-outline" size={32} color="#fff" />
+          ),
         }}
       />
 
@@ -104,9 +124,11 @@ export default function AppTabs() {
               <MaterialCommunityIcons
                 name="cog"
                 size={28}
-                color={focused ? '#2f855a' : '#a0aec0'}
+                color={focused ? theme.colors.primary : theme.colors.outline}
               />
-              <Text style={{ color: focused ? '#2f855a' : '#a0aec0', fontSize: 12 }}>Configs</Text>
+              <Text style={{ color: focused ? theme.colors.primary : theme.colors.outline, fontSize: 12 }}>
+                Configs
+              </Text>
             </View>
           ),
           tabBarButton: (props) => <TouchableOpacity {...props} activeOpacity={1} />,
@@ -124,7 +146,9 @@ export default function AppTabs() {
                 source={{ uri: profileImageUri }}
                 style={{ backgroundColor: 'transparent' }}
               />
-              <Text style={{ color: focused ? '#2f855a' : '#a0aec0', fontSize: 12 }}>Perfil</Text>
+              <Text style={{ color: focused ? theme.colors.primary : theme.colors.outline, fontSize: 12 }}>
+                Perfil
+              </Text>
             </View>
           ),
           tabBarButton: (props) => <TouchableOpacity {...props} activeOpacity={1} />,
@@ -138,16 +162,14 @@ const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 30 : 20,
-    left: 25,
-    right: 25,
-    backgroundColor: '#ffffff',
+
     borderRadius: 20,
     height: 80,
     shadowColor: '#38a169',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
-    elevation: 10,
+    elevation: 12,
     borderTopWidth: 0,
   },
   icon: {
@@ -168,10 +190,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#2f855a',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 10,
   },
 });
