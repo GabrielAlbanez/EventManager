@@ -7,6 +7,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Toast, ALERT_TYPE } from 'react-native-alert-notification';
 import { useThemeContext } from 'context/ThemeProvider';
 import { MD3Theme } from 'react-native-paper';
+import { apiUrl } from '~/global/urlReq';
 
 export const ConfigScreen = () => {
   const { user } = useUser();
@@ -22,7 +23,7 @@ export const ConfigScreen = () => {
     setIsBiometricEnabled(value);
 
     startTransition(() => {
-      fetch(`http://172.16.6.11:5000/auth/user/settings/biometric`, {
+      fetch(`${apiUrl}/auth/user/settings/biometric`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

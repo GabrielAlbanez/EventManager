@@ -142,6 +142,7 @@ export default function RegisterScreen() {
         showDialog: true,
       });
     } catch (error) {
+      console.log(error)
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: 'Erro de conexão',

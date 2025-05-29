@@ -17,6 +17,7 @@ import { useUser } from 'context/UserContext';
 import { ConfigScreen } from '~/screens/ConfigScreen';
 import { useThemeContext } from 'context/ThemeProvider';
 import EventosScreen from '~/screens/EventosScreen';
+import { apiUrl } from '~/global/urlReq';
 
 const Tab = createBottomTabNavigator();
 const { width } = Dimensions.get('window');
@@ -46,10 +47,10 @@ export default function AppTabs() {
     if (user.providerType ?? user.provedorType === 'google') {
       return isUrl
         ? user.profile_image
-        : `http://172.16.6.11:5000/upload/get_image/${user.profile_image}`;
+        : `${apiUrl}/upload/get_image/${user.profile_image}`;
     }
 
-    return `http://172.16.6.11:5000/upload/get_image/${user.profile_image}`;
+    return `${apiUrl}/upload/get_image/${user.profile_image}`;
   };
 
   const profileImageUri = getProfileImageUri();

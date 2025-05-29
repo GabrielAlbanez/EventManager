@@ -86,6 +86,7 @@ export default function LoginScreen() {
           await AsyncStorage.setItem('refresh_token', data.refresh_token);
           try {
             await authenticateWithBiometrics(data.user.biometric);
+            console.log(data)
             updateUser(data.user);
             navigation.reset({
               index: 0,
@@ -145,7 +146,7 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('access_token', result.access_token);
         await AsyncStorage.setItem('refresh_token', result.refresh_token);
         try {
-          await authenticateWithBiometrics(result.data.user.biometric);
+          await authenticateWithBiometrics(result.user.biometric);
           updateUser(result.user);
           navigation.reset({
             index: 0,
