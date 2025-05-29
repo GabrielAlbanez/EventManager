@@ -16,6 +16,7 @@ import ProfileScreen from '~/screens/ProfileScreen';
 import { useUser } from 'context/UserContext';
 import { ConfigScreen } from '~/screens/ConfigScreen';
 import { useThemeContext } from 'context/ThemeProvider';
+import EventosScreen from '~/screens/EventosScreen';
 
 const Tab = createBottomTabNavigator();
 const { width } = Dimensions.get('window');
@@ -85,8 +86,8 @@ export default function AppTabs() {
       />
 
       <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
+        name="Eventos"
+        component={EventosScreen}
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.icon}>
@@ -161,7 +162,7 @@ export default function AppTabs() {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 30 : 20,
+    bottom: Platform.OS === 'ios' ? 30 : 0,
 
     borderRadius: 20,
     height: 80,
